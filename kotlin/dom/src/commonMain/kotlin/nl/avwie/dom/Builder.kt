@@ -1,11 +1,11 @@
 package nl.avwie.dom
 
-class DefinitionBuilderScope(
+class Builder(
     private val writer: Writer,
     private val namespace: String?
 ) {
 
-    private fun element(name: String, block: DefinitionBuilderScope.() -> Unit = {}) {
+    private fun element(name: String, block: Builder.() -> Unit = {}) {
         writer.beginElement(name, namespace)
         block(this)
         writer.endElement()
@@ -15,17 +15,17 @@ class DefinitionBuilderScope(
         writer.writeAttribute(name, value, namespace)
     }
 
-    private fun text(raw: String) {
+    fun text(raw: String) {
         writer.writeText(raw)
     }
 
-    operator fun String.invoke(block: DefinitionBuilderScope.() -> Unit = {}) {
+    operator fun String.invoke(block: Builder.() -> Unit = {}) {
         element(this, block)
     }
 
     operator fun String.invoke(
         vararg args: Pair<String?, Any?>?,
-        block: DefinitionBuilderScope.() -> Unit = {})
+        block: Builder.() -> Unit = {})
     {
         element(this) {
             args.filterNotNull()

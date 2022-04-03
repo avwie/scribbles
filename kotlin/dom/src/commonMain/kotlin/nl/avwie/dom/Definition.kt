@@ -7,13 +7,9 @@ fun interface Definition {
     companion object {
         fun build(
             namespace: String?,
-            block: DefinitionBuilderScope.() -> Unit = {}
+            block: Builder.() -> Unit = {}
         ): Definition = Definition { writer ->
-            block(DefinitionBuilderScope(writer, namespace))
+            block(Builder(writer, namespace))
         }
-
-        fun build(
-            block: DefinitionBuilderScope.() -> Unit
-        ): Definition = build(null, block)
     }
 }

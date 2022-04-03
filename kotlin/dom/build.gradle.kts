@@ -2,6 +2,10 @@ plugins {
     kotlin("multiplatform") version "1.6.10"
 }
 
+rootProject.plugins.withType<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin> {
+    rootProject.the<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension>().nodeVersion = "16.0.0"
+}
+
 group = "nl.avwie"
 version = "1.0-SNAPSHOT"
 
