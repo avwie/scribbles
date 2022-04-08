@@ -12,7 +12,7 @@ class Builder(
     }
 
     private fun attribute(name: String, value: String) {
-        writer.writeAttribute(name, value, namespace)
+        writer.writeAttribute(name, value)
     }
 
     fun text(raw: String) {

@@ -20,7 +20,7 @@ class BrowserWriter : Writer {
         result = stack.removeFirst()
     }
 
-    override fun writeAttribute(name: String, value: String, namespace: String?) {
+    override fun writeAttribute(name: String, value: String) {
         stack.first().setAttribute(name, value)
     }
 

@@ -4,6 +4,6 @@ interface Writer {
     fun beginElement(name: String, namespace: String?)
     fun endElement()
 
-    fun writeAttribute(name: String, value: String, namespace: String?)
+    fun writeAttribute(name: String, value: String)
     fun writeText(text: String)
 }

@@ -35,7 +35,7 @@ class AppendableWriter(
         level -= 1
     }
 
-    override fun writeAttribute(name: String, value: String, namespace: String?) {
+    override fun writeAttribute(name: String, value: String) {
         appendable.append(" $name=\"$value\"")
     }
 

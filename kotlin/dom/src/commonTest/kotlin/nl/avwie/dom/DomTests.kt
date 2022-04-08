@@ -16,6 +16,8 @@ class DomTests {
                 "baz" to "bat",
                 "quux" to 1231.44
             )
+
+            "single" ()
         }
 
         val result = foo.renderAsString(prettyPrint = true)
