@@ -1,7 +1,7 @@
 package nl.avwie.dom
 
 class Builder(
-    private val writer: Writer,
+    private val writer: Writer<*>,
     private val namespace: String?
 ) {
 

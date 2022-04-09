@@ -4,7 +4,7 @@ class AppendableWriter(
     private val appendable: Appendable,
     private val prettyPrint: Boolean,
     private val prettyPrintIndent: Int
-) : Writer {
+) : Writer<String> {
     private val tags = ArrayDeque<String>()
     private val hasChildren = ArrayDeque<Boolean>()
     private var level = 0
@@ -38,6 +38,8 @@ class AppendableWriter(
     override fun writeAttribute(name: String, value: String) {
         appendable.append(" $name=\"$value\"")
     }
+
+    override fun result(): String = appendable.toString()
 
     override fun writeText(text: String) {
         appendable.append(text)

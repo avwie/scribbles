@@ -3,11 +3,9 @@ package nl.avwie.dom
 import kotlinx.browser.document
 import org.w3c.dom.Element
 
-class BrowserWriter : Writer {
+class BrowserWriter : Writer<Element> {
 
-    var result: Element? = null
-        private set
-
+    private var _result: Element? = null
     private val stack = ArrayDeque<Element>()
 
     override fun beginElement(name: String, namespace: String?) {
@@ -17,7 +15,7 @@ class BrowserWriter : Writer {
     }
 
     override fun endElement() {
-        result = stack.removeFirst()
+        _result = stack.removeFirst()
     }
 
     override fun writeAttribute(name: String, value: String) {
@@ -27,4 +25,6 @@ class BrowserWriter : Writer {
     override fun writeText(text: String) {
         stack.first().textContent = text
     }
+
+    override fun result(): Element = _result!!
 }

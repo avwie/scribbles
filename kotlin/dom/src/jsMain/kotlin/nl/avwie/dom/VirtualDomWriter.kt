@@ -4,10 +4,9 @@ import externals.virtualDom.VNode
 import externals.virtualDom.h
 import kotlin.js.json
 
-class VirtualDomWriter : Writer {
+class VirtualDomWriter : Writer<VNode> {
 
-    var result: VNode? = null
-        private set
+    private var _result: VNode? = null
 
     private val elements = ArrayDeque<Pair<String, String?>>()
     private val children = ArrayDeque<MutableList<dynamic>>()
@@ -31,8 +30,8 @@ class VirtualDomWriter : Writer {
         val vnode = h(selector = element, properties = attributes, children = children)
 
         // add to parent
-        result = vnode
-        this.children.firstOrNull()?.add(result)
+        _result = vnode
+        this.children.firstOrNull()?.add(_result)
     }
 
     override fun writeAttribute(name: String, value: String) {
@@ -42,4 +41,6 @@ class VirtualDomWriter : Writer {
     override fun writeText(text: String) {
         children.first().add(text)
     }
+
+    override fun result(): VNode = _result!!
 }
