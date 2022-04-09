@@ -15,7 +15,14 @@ repositories {
 
 kotlin {
     jvm()
-    js(IR) {
+    js("jsCore", IR)
+
+    js("demo", IR) {
+        browser()
+        binaries.executable()
+    }
+
+    js("stress", IR) {
         browser()
         binaries.executable()
     }
@@ -28,10 +35,18 @@ kotlin {
             }
         }
 
-        val jsMain by getting {
+        val jsCoreMain by getting {
             dependencies {
                 implementation(npm("virtual-dom", "2.1.1"))
             }
+        }
+
+        val demoMain by getting {
+            dependsOn(jsCoreMain)
+        }
+
+        val stressMain by getting {
+            dependsOn(jsCoreMain)
         }
     }
 }
