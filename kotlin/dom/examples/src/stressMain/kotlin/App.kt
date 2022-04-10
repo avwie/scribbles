@@ -93,7 +93,7 @@ data class Update<S>(
 }
 
 fun main() {
-    val container = document.getElementById("container")!!
+    val container = document.getElementById("app")!!
     val dt = 1000 / 60
     var updater = Update.build(
         mount = container,

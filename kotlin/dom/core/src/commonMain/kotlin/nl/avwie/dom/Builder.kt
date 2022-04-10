@@ -30,7 +30,7 @@ class Builder(
         element(this) {
             args.filterNotNull()
                 .filter { (name, value) -> name != null && value != null }
-                .forEach { (name, value) -> attribute(name!!, value.toString()!!) }
+                .forEach { (name, value) -> attribute(name!!, value.toString()) }
             block(this)
         }
     }

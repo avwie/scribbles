@@ -1,7 +1,7 @@
 package nl.avwie.dom
 
 interface Writer<T> {
-    fun beginElement(name: String, namespace: String?)
+    fun beginElement(tag: String, namespace: String?)
     fun endElement()
 
     fun writeAttribute(name: String, value: String)
