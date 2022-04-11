@@ -1,4 +1,4 @@
-group = "nl.avwie.dom"
+group = "nl.avwie.mvu"
 version = "1.0-SNAPSHOT"
 
 plugins {
@@ -10,26 +10,20 @@ rootProject.plugins.withType<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJ
 }
 
 kotlin {
-    js("demo", IR) {
-        browser()
-        binaries.executable()
-    }
+    jvm()
 
-    js("stress", IR) {
+    js {
         browser()
-        binaries.executable()
     }
 
     sourceSets {
-        val commonMain by getting {
-            dependencies {
-                implementation(project(":dom:core"))
-            }
-        }
+        val commonMain by getting
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
             }
         }
+
+        val jsMain by getting {}
     }
 }
