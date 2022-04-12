@@ -6,7 +6,7 @@ rootProject.plugins.withType<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJ
     rootProject.the<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension>().nodeVersion = "16.0.0"
 }
 
-group = "nl.avwie.dom"
+group = "nl.avwie.mvu"
 version = "1.0-SNAPSHOT"
 
 repositories {
@@ -14,22 +14,13 @@ repositories {
 }
 
 kotlin {
-    js("demo", IR) {
+    jvm()
+    js(IR) {
         browser()
-        binaries.executable()
-    }
-
-    js("stress", IR) {
-        browser()
-        binaries.executable()
     }
 
     sourceSets {
-        val commonMain by getting {
-            dependencies {
-                implementation(project(":dom:core"))
-            }
-        }
+        val commonMain by getting
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))

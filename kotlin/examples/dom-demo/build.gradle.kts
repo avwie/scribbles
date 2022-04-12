@@ -14,22 +14,25 @@ repositories {
 }
 
 kotlin {
-    jvm()
-    js(IR) {
+    js("demo", IR) {
         browser()
+        binaries.executable()
+    }
+
+    js("stress", IR) {
+        browser()
+        binaries.executable()
     }
 
     sourceSets {
-        val commonMain by getting
+        val commonMain by getting {
+            dependencies {
+                implementation(project(":dom"))
+            }
+        }
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
-            }
-        }
-
-        val jsMain by getting {
-            dependencies {
-                implementation(npm("virtual-dom", "2.1.1"))
             }
         }
     }

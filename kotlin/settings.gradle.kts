@@ -4,6 +4,8 @@ pluginManagement {
     }
 }
 
-rootProject.name = "nl.avwie.kotlin"
-include("dom:core")
-include("dom:examples")
+rootProject.name = "scribbles"
+include("dom")
+include("mvu")
+
+include("examples:dom-demo")
