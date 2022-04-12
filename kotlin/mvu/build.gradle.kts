@@ -1,1 +1,0 @@
-group = "nl.avwie.mvu"

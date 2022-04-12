@@ -19,12 +19,6 @@ class Builder(
         writer.writeText(raw)
     }
 
-    fun include(definition: Definition) {
-        definition.write(writer)
-    }
-
-    operator fun Definition.invoke() = include(this)
-
     operator fun String.invoke(block: Builder.() -> Unit = {}) {
         element(this, block)
     }

@@ -4,14 +4,6 @@ pluginManagement {
     }
 }
 
-dependencyResolutionManagement {
-    repositories {
-        mavenCentral()
-    }
-}
-
-
-rootProject.name = "nl.avwie"
-include("mvu:core")
+rootProject.name = "nl.avwie.kotlin"
 include("dom:core")
 include("dom:examples")
