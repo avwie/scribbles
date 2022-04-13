@@ -6,6 +6,5 @@ pluginManagement {
 
 rootProject.name = "scribbles"
 include("dom")
-include("mvu")
 
 include("examples:dom-demo")
