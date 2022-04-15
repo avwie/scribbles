@@ -14,7 +14,8 @@ repositories {
 }
 
 kotlin {
-    js("demo", IR) {
+
+    js("stress", IR) {
         browser()
         binaries.executable()
     }

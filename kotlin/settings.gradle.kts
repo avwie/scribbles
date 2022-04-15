@@ -6,5 +6,7 @@ pluginManagement {
 
 rootProject.name = "scribbles"
 include("dom")
+include("vdom")
 
 include("examples:dom-demo")
+include("examples:dom-stress-demo")

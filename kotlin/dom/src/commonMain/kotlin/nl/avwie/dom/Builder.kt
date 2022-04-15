@@ -23,6 +23,13 @@ class Builder(
         element(this, block)
     }
 
+    operator fun String.invoke(args: Map<String, String>, block: Builder.() -> Unit = {}) {
+        element(this) {
+            args.forEach { (name, value) -> attribute(name, value) }
+            block(this)
+        }
+    }
+
     operator fun String.invoke(
         vararg args: Pair<String?, Any?>?,
         block: Builder.() -> Unit = {})
@@ -33,5 +40,9 @@ class Builder(
                 .forEach { (name, value) -> attribute(name!!, value.toString()) }
             block(this)
         }
+    }
+
+    fun include(definition: Definition) {
+        definition.write(writer)
     }
 }

@@ -14,9 +14,9 @@ repositories {
 }
 
 kotlin {
-    js("demo", IR) {
+    jvm()
+    js(IR) {
         browser()
-        binaries.executable()
     }
 
     sourceSets {
@@ -29,6 +29,9 @@ kotlin {
             dependencies {
                 implementation(kotlin("test"))
             }
+        }
+
+        val jsMain by getting {
         }
     }
 }
