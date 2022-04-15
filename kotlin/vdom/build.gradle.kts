@@ -17,6 +17,7 @@ kotlin {
     jvm()
     js(IR) {
         browser()
+        binaries.executable()
     }
 
     sourceSets {
@@ -32,6 +33,7 @@ kotlin {
         }
 
         val jsMain by getting {
+
         }
     }
 }

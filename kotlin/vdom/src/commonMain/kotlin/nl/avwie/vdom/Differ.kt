@@ -4,8 +4,8 @@ import kotlin.math.max
 
 object Differ {
 
-    fun diff(left: Node, right: Node): List<Patch> = when {
-        left == right -> listOf(Skip)
+    fun diff(left: Node, right: Node): List<PatchOp> = when {
+        left == right -> listOf(Next)
         left.tagName != right.tagName -> listOf(Remove, Add(right))
         else -> listOf(
             Patches(diffAttributes(left.attributes, right.attributes), diffChildren(left.children, right.children))
@@ -21,14 +21,14 @@ object Differ {
         return toRemove.map { RemoveAttr(it) } + toSet.map { SetAttr(it, right[it]!!) }
     }
 
-    private fun diffChildren(left: List<Node>, right: List<Node>): List<Patch> {
+    private fun diffChildren(left: List<Node>, right: List<Node>): List<PatchOp> {
         val length = max(left.size, right.size)
         return (0 until length).flatMap { index ->
             diffChild(left.getOrNull(index), right.getOrNull(index))
         }
     }
 
-    private fun diffChild(left: Node?, right: Node?): List<Patch> = when {
+    private fun diffChild(left: Node?, right: Node?): List<PatchOp> = when {
         left != null && right == null -> listOf(Remove)
         left == null && right != null -> listOf(Add(right))
         else -> diff(left!!, right!!)
