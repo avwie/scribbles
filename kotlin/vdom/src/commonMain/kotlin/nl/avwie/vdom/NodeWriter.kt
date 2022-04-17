@@ -1,6 +1,8 @@
 package nl.avwie.vdom
 
 import nl.avwie.dom.Writer
+import nl.avwie.vdom.Node.Companion.NAMESPACE_ATTR_NAME
+import nl.avwie.vdom.Node.Companion.TEXT_ATTR_NAME
 
 class NodeWriter : Writer<Node> {
 
@@ -9,7 +11,7 @@ class NodeWriter : Writer<Node> {
     private val current = ArrayDeque<Node>()
 
     override fun beginElement(tag: String, namespace: String?) {
-        current.addFirst(Node(tag, mapOf("namespace" to (namespace ?: "")), listOf()))
+        current.addFirst(Node(tag, mapOf(NAMESPACE_ATTR_NAME to (namespace ?: "")), listOf()))
     }
 
     override fun endElement() {
@@ -29,7 +31,7 @@ class NodeWriter : Writer<Node> {
 
     override fun writeText(text: String) {
         current.removeFirst().let {
-            it.copy(attributes = it.attributes + ("text" to text))
+            it.copy(attributes = it.attributes + (TEXT_ATTR_NAME to text))
         }.also { current.addFirst(it) }
     }
 

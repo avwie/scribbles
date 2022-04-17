@@ -31,3 +31,13 @@ fun svg(
         )
     }
 }
+
+fun html(
+    root: String,
+    vararg args: Pair<String?, Any?>?,
+    block: Builder.() -> Unit = {}
+): Definition {
+    return Definition.build("http://www.w3.org/1999/xhtml") {
+        root.invoke(*args, block=block)
+    }
+}
