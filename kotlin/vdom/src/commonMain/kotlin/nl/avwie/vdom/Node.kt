@@ -1,28 +1,43 @@
 package nl.avwie.vdom
 
-import nl.avwie.dom.Definition
-import nl.avwie.vdom.Node.Companion.NAMESPACE_ATTR_NAME
-import nl.avwie.vdom.Node.Companion.PROTECTED_ATTR_NAMES
-import nl.avwie.vdom.Node.Companion.TEXT_ATTR_NAME
-
 data class Node(
-    val tagName: String,
+    val name: String,
     val attributes: Map<String, String>,
-    val children: List<Node>
+    val childNodes: List<Node>,
+    val namespace: String?,
+    val text: String?
 ) {
-    companion object {
-        const val NAMESPACE_ATTR_NAME = "__namespace"
-        const val TEXT_ATTR_NAME = "__text"
-        val PROTECTED_ATTR_NAMES = setOf(NAMESPACE_ATTR_NAME, TEXT_ATTR_NAME)
-    }
-}
+    class BuilderScope(private val name: String, var namespace: String? = null) {
 
-fun Node.toDefinition(): Definition = Definition.build(if (attributes[NAMESPACE_ATTR_NAME].isNullOrBlank()) null else attributes[NAMESPACE_ATTR_NAME]) {
-    val validAttributes = attributes.filterKeys { !PROTECTED_ATTR_NAMES.contains(it) }
-    tagName.invoke(validAttributes) {
-        attributes[TEXT_ATTR_NAME]?.also { text(it) }
-        children.forEach { child ->
-            include(child.toDefinition())
+        val attributes = mutableMapOf<String, String>()
+        val children = mutableListOf<Node>()
+
+        var text: String? = null
+
+        fun build(): Node = Node(name, attributes, children, namespace, text)
+
+        fun node(name: String, block: BuilderScope.() -> Unit = {}) {
+            val builder = BuilderScope(name, namespace)
+            block(builder)
+            children.add(builder.build())
+        }
+
+        operator fun String.invoke(block: BuilderScope.() -> Unit = {}) = node(this, block)
+
+        infix fun String.by(value: String) {
+            attributes[this] = value
+        }
+
+        operator fun String.unaryPlus() {
+            text = this
         }
     }
 }
+
+fun node(name: String, namespace: String? = null, block: Node.BuilderScope.() -> Unit): Node {
+    val scope = Node.BuilderScope(name, namespace)
+    block(scope)
+    return scope.build()
+}
+
+fun html(root: String, block: Node.BuilderScope.() -> Unit) = node(root, "http://www.w3.org/1999/xhtml", block)

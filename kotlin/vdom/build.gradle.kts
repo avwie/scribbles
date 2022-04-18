@@ -20,12 +20,9 @@ kotlin {
         binaries.executable()
     }
 
+
     sourceSets {
-        val commonMain by getting {
-            dependencies {
-                implementation(project(":dom"))
-            }
-        }
+        val commonMain by getting
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))

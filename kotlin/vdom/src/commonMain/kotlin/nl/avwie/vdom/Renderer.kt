@@ -1,10 +1,23 @@
 package nl.avwie.vdom
 
-import nl.avwie.vdom.Node.Companion.PROTECTED_ATTR_NAMES
-import nl.avwie.vdom.Node.Companion.TEXT_ATTR_NAME
 import kotlin.math.max
 
-class Renderer(val target: RenderTarget<*>) {
+class Renderer(private val target: Target) {
+    interface Target {
+        fun down()
+        fun up()
+        fun next()
+        fun reset()
+        fun clear()
+
+        fun createElement(node: Node)
+        fun removeElement()
+
+        fun updateAttribute(name: String, value: String)
+        fun removeAttribute(name: String)
+
+        fun setText(name: String)
+    }
 
     private var current: Node? = null
 
@@ -13,72 +26,67 @@ class Renderer(val target: RenderTarget<*>) {
         when (current) {
             null -> {
                 target.clear()
-                renderNode(node)
+                target.down()
+                target.createElement(node)
             }
             else -> {
-                target.next()
+                target.down()
                 updateNode(current!!, node)
             }
         }
         current = node
     }
 
-    private fun renderNode(node: Node) {
-        node.toDefinition().write(target)
-    }
-
     private fun updateNode(current: Node, updated: Node) {
         when {
             current == updated -> target.next()
-            current.tagName != updated.tagName -> replaceNode(updated)
+            current.name != updated.name || current.namespace != updated.namespace -> replaceNode(updated)
             else -> updateNodeDetailed(current, updated)
         }
     }
 
     private fun replaceNode(updated: Node) {
         target.removeElement()
-        updated.toDefinition().write(target)
-    }
-
-    private fun removeNode() {
-        target.removeElement()
+        target.createElement(updated)
+        target.next()
     }
 
     private fun updateNodeDetailed(current: Node, updated: Node) {
         updateAttributes(current.attributes, updated.attributes)
-        updateText(current.attributes[TEXT_ATTR_NAME], updated.attributes[TEXT_ATTR_NAME])
-        updateChildren(current.children, updated.children)
+        updateText(current.text, updated.text)
+        updateChildren(current.childNodes, updated.childNodes)
     }
 
     private fun updateAttributes(current: Map<String, String>, updated: Map<String, String>) {
-        val leftKeys = current.keys.filter { !PROTECTED_ATTR_NAMES.contains(it) }.toSet()
-        val rightKeys = updated.keys.filter { !PROTECTED_ATTR_NAMES.contains(it) }.toSet()
+        val leftKeys = current.keys.toSet()
+        val rightKeys = updated.keys.toSet()
 
         val toRemove = leftKeys - rightKeys
         val toSet = rightKeys.filter { current[it] != updated[it] }
 
         toRemove.forEach(target::removeAttribute)
-        toSet.forEach { key -> target.writeAttribute(key, updated[key]!!) }
+        toSet.forEach { key -> target.updateAttribute(key, updated[key]!!) }
     }
 
     private fun updateText(current: String?, updated: String?) {
-        if (updated != null && current != updated) target.writeText(updated)
+        if (updated != null && current != updated) target.setText(updated)
     }
 
     private fun updateChildren(current: List<Node>, updated: List<Node>) {
+        target.down()
         val length = max(current.size, updated.size)
         (0 until length).forEach { index ->
             val (currentChild, updatedChild) = current.getOrNull(index) to updated.getOrNull(index)
             updateChild(currentChild, updatedChild)
         }
+        target.up()
     }
 
     private fun updateChild(current: Node?, updated: Node?) {
         when {
-            current == null && updated != null -> renderNode(updated)
-            current != null && updated == null -> removeNode()
+            current == null && updated != null -> target.createElement(updated)
+            current != null && updated == null -> target.removeElement()
             else -> {
-                target.next()
                 updateNode(current!!, updated!!)
             }
         }
