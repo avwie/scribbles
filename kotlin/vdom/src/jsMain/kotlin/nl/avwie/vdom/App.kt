@@ -2,37 +2,43 @@ package nl.avwie.vdom
 
 import kotlinx.browser.document
 import kotlinx.browser.window
-import kotlin.random.Random
 
-fun tree(message: String) = html("div") {
-    "h1" {
-        + "Welcome to this demo"
+fun demo(rotation: Int) = svg {
+    "width" by "300"
+    "height" by "200"
+
+    "rect" {
+        "width" by "100%"
+        "height" by "100%"
+        "fill" by "red"
     }
 
-    "div" {
-        (if (Random.nextBoolean()) "h2" else "h3") {
-            + "The user input is described below:"
-        }
+    "circle" {
+        "cx" by "150"
+        "cy" by "100"
+        "r" by "80"
+        "fill" by "green"
+    }
 
-        "h3" {
-            (if (Random.nextBoolean()) "b" else "i") {
-                + message
-            }
-        }
-
-        "p" {
-            + "This is a footer"
-        }
+    "text" {
+        "transform" by "rotate($rotation, 150, 100)"
+        "x" by "150"
+        "y" by "125"
+        "font-size" by "60"
+        "text-anchor" by "middle"
+        "fill" by "white"
+        + "SVG"
     }
 }
 
 fun main() {
     val container = document.getElementById("container")!!
-    val target = BrowserRendererTarget(container)
+    val target = BrowserDocumentTarget(container)
     val renderer = Renderer(target)
 
-    var counter = 0
+    var angle = 0
     window.setInterval({
-        renderer.render(tree("Counter is: ${++counter}"))
-    }, 1000)
+        renderer.render(demo(angle))
+        angle += 1
+    }, 1000 / 60)
 }

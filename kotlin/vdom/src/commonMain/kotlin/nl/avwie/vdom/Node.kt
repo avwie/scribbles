@@ -40,4 +40,8 @@ fun node(name: String, namespace: String? = null, block: Node.BuilderScope.() ->
     return scope.build()
 }
 
-fun html(root: String, block: Node.BuilderScope.() -> Unit) = node(root, "http://www.w3.org/1999/xhtml", block)
+fun html(block: Node.BuilderScope.() -> Unit) = node("html", "http://www.w3.org/1999/xhtml", block)
+fun svg(block: Node.BuilderScope.() -> Unit) = node("svg", "http://www.w3.org/2000/svg") {
+    attributes["version"] = "1.1"
+    block()
+}

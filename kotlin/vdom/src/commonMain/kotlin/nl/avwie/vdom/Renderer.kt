@@ -2,93 +2,106 @@ package nl.avwie.vdom
 
 import kotlin.math.max
 
-class Renderer(private val target: Target) {
-    interface Target {
-        fun down()
-        fun up()
-        fun next()
-        fun reset()
-        fun clear()
+class Renderer<T>(private val target: Target<T>) {
 
-        fun createElement(node: Node)
-        fun removeElement()
+    data class Mounted<T>(val element: T, val container: T?, val node: Node, val childNodes: List<Mounted<T>>)
 
-        fun updateAttribute(name: String, value: String)
-        fun removeAttribute(name: String)
-
-        fun setText(name: String)
+    interface Target<T> {
+        fun createElement(name: String, namespace: String?): T
+        fun setAttribute(element: T, key: String, value: String)
+        fun setText(element: T, text: String?)
+        fun appendChild(container: T?, child: T)
+        fun remove(element: T)
+        fun removeAttribute(element: T, key: String)
     }
 
-    private var current: Node? = null
+    private var root: Mounted<T>? = null
+    val rootElement get() = root?.element
 
     fun render(node: Node) {
-        target.reset()
-        when (current) {
-            null -> {
-                target.clear()
-                target.down()
-                target.createElement(node)
-            }
-            else -> {
-                target.down()
-                updateNode(current!!, node)
-            }
-        }
-        current = node
+        root = root?.let { updateNode(it, node) } ?: mount(node, null)
     }
 
-    private fun updateNode(current: Node, updated: Node) {
-        when {
-            current == updated -> target.next()
-            current.name != updated.name || current.namespace != updated.namespace -> replaceNode(updated)
+    private fun update(updated: Node): Mounted<T> {
+        return updateNode(root!!, updated)
+    }
+
+    private fun updateNode(current: Mounted<T>, updated: Node): Mounted<T> {
+        return when {
+            current.node == updated -> current
+            current.node.name != updated.name -> replaceNode(current, updated)
             else -> updateNodeDetailed(current, updated)
         }
     }
 
-    private fun replaceNode(updated: Node) {
-        target.removeElement()
-        target.createElement(updated)
-        target.next()
+    private fun replaceNode(current: Mounted<T>, updated: Node): Mounted<T> {
+        target.remove(current.element)
+        return mount(updated, current.container)
     }
 
-    private fun updateNodeDetailed(current: Node, updated: Node) {
-        updateAttributes(current.attributes, updated.attributes)
-        updateText(current.text, updated.text)
-        updateChildren(current.childNodes, updated.childNodes)
+    private fun updateNodeDetailed(current: Mounted<T>, updated: Node): Mounted<T> {
+        return current
+            .let { updateAttributes(it, updated)}
+            .let { updateText(it, updated) }
+            .let { updateChildren(it, updated) }
     }
 
-    private fun updateAttributes(current: Map<String, String>, updated: Map<String, String>) {
-        val leftKeys = current.keys.toSet()
-        val rightKeys = updated.keys.toSet()
+    private fun updateAttributes(current: Mounted<T>, updated: Node): Mounted<T> = when (current.node.attributes) {
+        updated.attributes -> current
+        else -> {
+            val leftKeys = current.node.attributes.keys.toSet()
+            val rightKeys = updated.attributes.keys.toSet()
 
-        val toRemove = leftKeys - rightKeys
-        val toSet = rightKeys.filter { current[it] != updated[it] }
+            val toRemove = leftKeys - rightKeys
+            val toSet = rightKeys.filter { current.node.attributes[it] != updated.attributes[it] }
 
-        toRemove.forEach(target::removeAttribute)
-        toSet.forEach { key -> target.updateAttribute(key, updated[key]!!) }
-    }
-
-    private fun updateText(current: String?, updated: String?) {
-        if (updated != null && current != updated) target.setText(updated)
-    }
-
-    private fun updateChildren(current: List<Node>, updated: List<Node>) {
-        target.down()
-        val length = max(current.size, updated.size)
-        (0 until length).forEach { index ->
-            val (currentChild, updatedChild) = current.getOrNull(index) to updated.getOrNull(index)
-            updateChild(currentChild, updatedChild)
+            toRemove.forEach { target.removeAttribute(current.element, it) }
+            toSet.forEach { target.setAttribute(current.element, it, updated.attributes[it]!!) }
+            current.copy(node = current.node.copy(attributes = updated.attributes))
         }
-        target.up()
     }
 
-    private fun updateChild(current: Node?, updated: Node?) {
-        when {
-            current == null && updated != null -> target.createElement(updated)
-            current != null && updated == null -> target.removeElement()
-            else -> {
-                updateNode(current!!, updated!!)
-            }
+    private fun updateText(current: Mounted<T>, updated: Node): Mounted<T> = when (current.node.text) {
+        updated.text -> current
+        else -> {
+            target.setText(current.element, updated.text)
+            current.copy(node = current.node.copy(text = updated.text))
         }
+    }
+
+    private fun updateChildren(current: Mounted<T>, updated: Node): Mounted<T> {
+        val indices = (0 until max(current.childNodes.size, updated.childNodes.size))
+        val mountedChildren = indices.mapNotNull { i ->
+            val mountedChild = current.childNodes.getOrNull(i)
+            val updatedChild = updated.childNodes.getOrNull(i)
+            updateChild(current.container, mountedChild, updatedChild)
+        }
+        return current.copy(childNodes = mountedChildren)
+    }
+
+    private fun updateChild(container: T?, mounted: Mounted<T>?, updated: Node?): Mounted<T>? = when {
+        mounted == null && updated != null -> mount(updated, container)
+        mounted != null && updated == null -> {
+            target.remove(mounted.element)
+            null
+        }
+        mounted == null && updated == null -> null
+        else -> updateNode(mounted!!, updated!!)
+    }
+
+    private fun mount(node: Node, container: T?): Mounted<T> {
+        val element = renderNodeWithoutChildren(node)
+        val mountedChildren = node.childNodes.map { mount(it, element) }
+        target.appendChild(container, element)
+        return Mounted(element, container, node, mountedChildren)
+    }
+
+    private fun renderNodeWithoutChildren(node: Node): T {
+        val element = target.createElement(node.name, node.namespace)
+        node.attributes.forEach { (key, value) ->
+            target.setAttribute(element, key, value)
+        }
+        target.setText(element, node.text)
+        return element
     }
 }
