@@ -10,7 +10,8 @@ class BrowserDocumentTarget(private val root: Element) : Renderer.Target<Element
     }
 
     override fun setAttribute(element: Element, key: String, value: String) {
-        element.setAttribute(key, value)
+        //element.setAttribute(key, value)
+        element.asDynamic().setAttribute(key, value) // <- this is waaay faster
     }
 
     override fun setText(element: Element, text: String?) {
