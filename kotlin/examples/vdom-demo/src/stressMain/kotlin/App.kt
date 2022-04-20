@@ -2,10 +2,7 @@ package nl.avwie.dom
 
 import kotlinx.browser.document
 import kotlinx.browser.window
-import nl.avwie.vdom.BrowserDocumentTarget
-import nl.avwie.vdom.Node
-import nl.avwie.vdom.Renderer
-import nl.avwie.vdom.svg
+import nl.avwie.vdom.*
 import org.w3c.dom.Element
 import kotlin.math.abs
 import kotlin.random.Random
@@ -39,16 +36,18 @@ fun initState(noOfBalls: Int, width: Double, height: Double): State = State(
     }
 )
 
-fun renderState(state: State) = svg {
+fun renderState(state: State) = svg<String> {
     "width" by state.area.width.toString()
     "height" by state.area.height.toString()
 
-    state.balls.forEach { ball ->
+    state.balls.forEachIndexed { i, ball ->
         "circle" {
             "cx" by ball.dynamics.x.toString()
             "cy" by ball.dynamics.y.toString()
             "r" by ball.radius.toString()
             "fill" by ball.color.hex()
+
+            event("click", "clicked $i!")
         }
     }
 }
@@ -70,13 +69,13 @@ fun updateState(state: State, dt: Double): State = state.copy(
     }
 )
 
-data class Update<S>(
+data class Update<S, Msg>(
     val state: S,
-    val render: (S) -> Node,
+    val render: (S) -> Node<Msg>,
     val update: (S) -> S,
-    val renderer: Renderer<Element>,
+    val renderer: Renderer<Msg, Element>,
 ) {
-    fun next(): Update<S> {
+    fun next(): Update<S, Msg> {
         val newState = update(state)
         val newVDom = render(newState)
         renderer.render(newVDom)
@@ -86,10 +85,10 @@ data class Update<S>(
     }
 
     companion object {
-        fun <S> build(mount: Element, initialState: S, render: (S) -> Node, update: (S) -> S): Update<S> {
+        fun <S> build(mount: Element, initialState: S, render: (S) -> Node<String>, update: (S) -> S): Update<S, String> {
             val vDom = render(initialState)
             val target = BrowserDocumentTarget(mount)
-            val renderer = Renderer(target)
+            val renderer = Renderer(target, Dispatcher.print<String>())
             renderer.render(vDom)
             return Update(initialState, render, update, renderer)
         }

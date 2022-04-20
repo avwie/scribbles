@@ -1,7 +1,7 @@
 package nl.avwie.vdom
 
 object Fixtures {
-    fun basicHTML(message: String, headerSize: Int = 1) = html {
+    fun basicHTML(message: String, headerSize: Int = 1) = html<Unit> {
         "head" {
             "title" {
                 + "Demo"
@@ -16,7 +16,7 @@ object Fixtures {
         }
     }
 
-    fun basicSVG(message: String, radius: Int = 80) = svg {
+    fun basicSVG(message: String, radius: Int = 80) = svg<Unit> {
         "width" by "300"
         "height" by "200"
 

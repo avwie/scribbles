@@ -32,4 +32,12 @@ class DOMDocumentTarget(private val document: Document) : Renderer.Target<Elemen
     override fun removeAttribute(element: Element, key: String) {
         element.removeAttribute(key)
     }
+
+    override fun setEventHandler(element: Element, event: String, callback: () -> Unit) {
+        // not implemented
+    }
+
+    override fun removeEventHandler(element: Element, event: String) {
+        // not implemented
+    }
 }
