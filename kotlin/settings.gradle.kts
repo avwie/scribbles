@@ -9,4 +9,4 @@ include("dom")
 include("vdom")
 
 include("examples:dom-demo")
-include("examples:dom-stress-demo")
+include("examples:vdom-demo")

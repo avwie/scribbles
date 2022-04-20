@@ -22,10 +22,6 @@ class Renderer<T>(private val target: Target<T>) {
         root = root?.let { updateNode(it, node) } ?: mount(node, null)
     }
 
-    private fun update(updated: Node): Mounted<T> {
-        return updateNode(root!!, updated)
-    }
-
     private fun updateNode(current: Mounted<T>, updated: Node): Mounted<T> {
         return when {
             current.node == updated -> current

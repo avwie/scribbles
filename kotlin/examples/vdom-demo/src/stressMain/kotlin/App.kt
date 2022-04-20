@@ -1,8 +1,11 @@
 package nl.avwie.dom
 
-import externals.virtualDom.VNode
 import kotlinx.browser.document
 import kotlinx.browser.window
+import nl.avwie.vdom.BrowserDocumentTarget
+import nl.avwie.vdom.Node
+import nl.avwie.vdom.Renderer
+import nl.avwie.vdom.svg
 import org.w3c.dom.Element
 import kotlin.math.abs
 import kotlin.random.Random
@@ -36,14 +39,17 @@ fun initState(noOfBalls: Int, width: Double, height: Double): State = State(
     }
 )
 
-fun renderState(state: State) = svg(width = state.area.width.toInt(), height = state.area.height.toInt()) {
+fun renderState(state: State) = svg {
+    "width" by state.area.width.toString()
+    "height" by state.area.height.toString()
+
     state.balls.forEach { ball ->
-        "circle" (
-            "cx" to ball.dynamics.x,
-            "cy" to ball.dynamics.y,
-            "r" to ball.radius,
-            "fill" to ball.color.hex()
-        )
+        "circle" {
+            "cx" by ball.dynamics.x.toString()
+            "cy" by ball.dynamics.y.toString()
+            "r" by ball.radius.toString()
+            "fill" by ball.color.hex()
+        }
     }
 }
 
@@ -66,28 +72,26 @@ fun updateState(state: State, dt: Double): State = state.copy(
 
 data class Update<S>(
     val state: S,
-    val render: (S) -> Definition,
+    val render: (S) -> Node,
     val update: (S) -> S,
-    private val vDom: VNode,
-    private val element: Element
+    val renderer: Renderer<Element>,
 ) {
     fun next(): Update<S> {
         val newState = update(state)
-        val newVDom = render(newState).toVNode()
-        val patches = vDom.diff(newVDom)
+        val newVDom = render(newState)
+        renderer.render(newVDom)
         return copy(
             state = newState,
-            vDom = newVDom,
-            element =  element.patch(patches)
         )
     }
 
     companion object {
-        fun <S> build(mount: Element, initialState: S, render: (S) -> Definition, update: (S) -> S): Update<S> {
-            val vDom = render(initialState).toVNode()
-            val element = vDom.toElement()
-            mount.appendChild(element)
-            return Update(initialState, render, update, vDom, element)
+        fun <S> build(mount: Element, initialState: S, render: (S) -> Node, update: (S) -> S): Update<S> {
+            val vDom = render(initialState)
+            val target = BrowserDocumentTarget(mount)
+            val renderer = Renderer(target)
+            renderer.render(vDom)
+            return Update(initialState, render, update, renderer)
         }
     }
 }
@@ -97,7 +101,7 @@ fun main() {
     val dt = 1000 / 60
     var updater = Update.build(
         mount = container,
-        initialState = initState(300, 1280.0, 1024.0),
+        initialState = initState(100, 1280.0, 1024.0),
         render = { state -> renderState(state) },
         update = { state -> updateState(state, dt.toDouble()) }
     )

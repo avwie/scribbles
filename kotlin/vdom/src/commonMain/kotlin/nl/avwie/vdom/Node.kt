@@ -11,7 +11,6 @@ data class Node(
 
         val attributes = mutableMapOf<String, String>()
         val children = mutableListOf<Node>()
-
         var text: String? = null
 
         fun build(): Node = Node(name, attributes, children, namespace, text)
