@@ -7,6 +7,10 @@ import org.w3c.dom.Element
 import kotlin.math.abs
 import kotlin.random.Random
 
+sealed interface Message
+data class Tick(val dt: Int): Message
+data class Click(val item: Int): Message
+
 data class Dynamics(val x: Double, val y: Double, val dx: Double, val dy: Double)
 data class Color(val red: Int, val green: Int, val blue: Int) {
     private fun Int.hex(): String = this.toString(16).padStart(2, '0')
@@ -36,7 +40,7 @@ fun initState(noOfBalls: Int, width: Double, height: Double): State = State(
     }
 )
 
-fun renderState(state: State) = svg<String> {
+fun renderState(state: State) = svg<Message> {
     "width" by state.area.width.toString()
     "height" by state.area.height.toString()
 
@@ -47,7 +51,7 @@ fun renderState(state: State) = svg<String> {
             "r" by ball.radius.toString()
             "fill" by ball.color.hex()
 
-            event("click", "clicked $i!")
+            event("click", Click(i))
         }
     }
 }
@@ -69,41 +73,25 @@ fun updateState(state: State, dt: Double): State = state.copy(
     }
 )
 
-data class Update<S, Msg>(
-    val state: S,
-    val render: (S) -> Node<Msg>,
-    val update: (S) -> S,
-    val renderer: Renderer<Msg, Element>,
-) {
-    fun next(): Update<S, Msg> {
-        val newState = update(state)
-        val newVDom = render(newState)
-        renderer.render(newVDom)
-        return copy(
-            state = newState,
-        )
-    }
-
-    companion object {
-        fun <S> build(mount: Element, initialState: S, render: (S) -> Node<String>, update: (S) -> S): Update<S, String> {
-            val vDom = render(initialState)
-            val target = BrowserDocumentTarget(mount)
-            val renderer = Renderer(target, Dispatcher.print<String>())
-            renderer.render(vDom)
-            return Update(initialState, render, update, renderer)
-        }
-    }
-}
-
 fun main() {
     val container = document.getElementById("app")!!
     val dt = 1000 / 60
-    var updater = Update.build(
-        mount = container,
+
+    val target = BrowserDocumentTarget(container)
+    val mvu = MVU(
+        target = target,
         initialState = initState(100, 1280.0, 1024.0),
-        render = { state -> renderState(state) },
-        update = { state -> updateState(state, dt.toDouble()) }
+        render = { model: State -> renderState(model) },
+        update = { model: State, message: Message ->
+            when (message) {
+                is Tick -> updateState(model, message.dt.toDouble())
+                is Click -> {
+                    console.log("Clicked ${message.item}")
+                    model
+                }
+            }
+        }
     )
 
-    window.setInterval({ updater = updater.next() }, dt)
+    window.setInterval({ mvu.dispatch(Tick(dt)) }, dt)
 }
