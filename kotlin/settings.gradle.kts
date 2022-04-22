@@ -1,6 +1,8 @@
 pluginManagement {
     plugins {
-        kotlin("multiplatform") version "1.6.20"
+        kotlin("multiplatform") version "1.6.21" apply false
+        kotlin("js") version "1.6.21" apply false
+        kotlin("plugin.serialization") version "1.6.21" apply false
     }
 }
 

@@ -1,21 +1,40 @@
 plugins {
     kotlin("multiplatform")
+    //kotlin("plugin.serialization")
 }
-
-rootProject.plugins.withType<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin> {
-    rootProject.the<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension>().nodeVersion = "16.0.0"
-}
-
-group = "nl.avwie.dom"
-version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
 }
 
 kotlin {
-    js(IR) {
-        browser()
+    js("worker", IR) {
+        binaries.executable()
+        browser {
+            webpackTask {
+                outputFileName = "worker.js"
+            }
+            distribution {
+                name = "worker"
+            }
+        }
+    }
+
+    js("frontend", IR) {
+        binaries.executable()
+        browser {
+            runTask {
+                outputFileName = "frontend.js"
+            }
+
+            webpackTask {
+                outputFileName = "frontend.js"
+            }
+
+            distribution {
+                name = "frontend"
+            }
+        }
     }
 
     sourceSets {
@@ -25,5 +44,15 @@ kotlin {
                 implementation(kotlin("test"))
             }
         }
+
+        val workerMain by getting {
+
+        }
+
+        val frontendMain by getting {
+            resources.srcDirs("./build/worker")
+        }
     }
 }
+
+tasks["frontendProcessResources"].dependsOn.add("workerBrowserDistribution")
