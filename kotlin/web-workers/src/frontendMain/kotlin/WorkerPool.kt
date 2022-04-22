@@ -6,15 +6,17 @@ import kotlin.math.min
 
 class WorkerPool(size: Int, private val workerScript: String) {
 
-    class Job<R : Response>(private val request: Request<R>, private val callback: (worker: Worker, response: R) -> Unit) {
-        fun execute(worker: Worker) {
-            worker.request(request) { response ->
+    class InitializedWorker(val workerId: String, val worker: Worker)
+
+    class Job<R : Response>(private val request: Request<R>, private val callback: (worker: InitializedWorker, response: R) -> Unit) {
+        fun execute(worker: InitializedWorker) {
+            worker.worker.request(request) { response ->
                 callback(worker, response)
             }
         }
     }
 
-    private val availableWorkers = ArrayDeque<Worker>()
+    private val availableWorkers = ArrayDeque<InitializedWorker>()
     private val queue = ArrayDeque<Job<*>>()
 
     init {
@@ -22,19 +24,18 @@ class WorkerPool(size: Int, private val workerScript: String) {
             val worker = Worker(workerScript)
             val workerId = "Worker [$workerScript-$nr]"
             worker.request(Initialize(workerId)) {
-                availableWorkers.addLast(worker)
                 console.log("$workerId initialized")
-                availableWorkers.addLast(worker)
+                availableWorkers.addLast(InitializedWorker(workerId, worker))
                 checkAvailableWork()
             }
         }
     }
 
-    fun <R : Response> request(request: Request<R>, callback: (response: R) -> Unit) {
+    fun <R : Response> request(request: Request<R>, callback: (workerId: String, response: R) -> Unit) {
         val job = Job(request) { worker, response ->
             availableWorkers.addLast(worker)
             checkAvailableWork()
-            callback(response)
+            callback(worker.workerId, response)
         }
         queue.addLast(job)
         checkAvailableWork()
