@@ -8,7 +8,6 @@ import org.w3c.dom.Worker
 
 fun Worker.postMessage(message: Message, callback: (response: Message) -> Unit) {
     this.onmessage = { messageEvent ->
-        console.log("[Frontend] received", messageEvent.data.toString())
         val returnMessage = Json.decodeFromString<Message>(messageEvent.data.toString())
         callback(returnMessage)
     }

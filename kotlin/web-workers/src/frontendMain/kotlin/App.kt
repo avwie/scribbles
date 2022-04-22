@@ -1,16 +1,12 @@
-import nl.avwie.webworkers.Ping
-import nl.avwie.webworkers.Sarcasm
-import org.w3c.dom.Worker
+import nl.avwie.webworkers.PIApproximation
 
 fun main() {
-    val worker = Worker("./worker.js");
-    with(worker) {
-        request(Ping) { response ->
-            console.log(response)
-        }
-
-        request(Sarcasm("Hallooooo!")) { response ->
-            console.log(response)
+    val pool = WorkerPool(10, "./worker.js")
+    with(pool) {
+        repeat(20) { no ->
+            request(PIApproximation(10000000)) { result ->
+                console.log(no + 1, "Approximation result: ", result.pi)
+            }
         }
     }
 }
