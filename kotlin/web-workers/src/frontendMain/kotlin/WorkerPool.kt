@@ -1,14 +1,18 @@
 import nl.avwie.webworkers.Initialize
 import nl.avwie.webworkers.Request
 import nl.avwie.webworkers.RequestResult
+import nl.avwie.webworkers.Response
 import org.w3c.dom.Worker
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 import kotlin.math.min
 
 class WorkerPool(size: Int, private val workerScript: String) {
 
     class InitializedWorker(val workerId: String, val worker: Worker)
 
-    class Job<R : RequestResult>(private val request: Request<R>, private val callback: (worker: InitializedWorker, response: R) -> Unit) {
+    class Job<R : RequestResult>(private val request: Request<R>, private val callback: (worker: InitializedWorker, response: Response) -> Unit) {
         fun execute(worker: InitializedWorker) {
             worker.worker.request(request) { response ->
                 callback(worker, response)
@@ -31,7 +35,7 @@ class WorkerPool(size: Int, private val workerScript: String) {
         }
     }
 
-    fun <R : RequestResult> request(request: Request<R>, callback: (workerId: String, response: R) -> Unit) {
+    private fun <R : RequestResult> request(request: Request<R>, callback: (workerId: String, response: Response) -> Unit) {
         val job = Job(request) { worker, response ->
             availableWorkers.addLast(worker)
             checkAvailableWork()
@@ -39,6 +43,16 @@ class WorkerPool(size: Int, private val workerScript: String) {
         }
         queue.addLast(job)
         checkAvailableWork()
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    suspend fun <R : RequestResult> request(request: Request<R>) = suspendCoroutine<R> { continuation ->
+        request(request) { workerId, response ->
+            when {
+                response.error != null -> continuation.resumeWithException(WorkerException(response.error))
+                else -> continuation.resume(response.result as R)
+            }
+        }
     }
 
     private fun checkAvailableWork() {

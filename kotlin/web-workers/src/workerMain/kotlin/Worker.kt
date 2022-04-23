@@ -15,7 +15,9 @@ fun main() = worker { request ->
             Initialized
         }
         is PIApproximation -> {
-            if (Random.nextBoolean()) PIApproximationResult(approximatePI(request.iterations)) else throw Error("Random failure!!!")
+            PIApproximationResult(approximatePI(request.iterations)).let {
+                if (Random.nextBoolean()) it else throw Error("Random failure!!!")
+            }
         }
     }
 }
@@ -40,7 +42,7 @@ fun worker(block: (request: Request<*>) -> RequestResult) {
 }
 
 fun approximatePI(iterations: Int): Double {
-    var inner: Int = 0
+    var inner = 0
     var px: Double
     var py: Double
     repeat(iterations) {
