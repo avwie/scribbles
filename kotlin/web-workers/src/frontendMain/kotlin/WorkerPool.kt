@@ -1,11 +1,7 @@
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
-import nl.avwie.webworkers.Initialize
 import nl.avwie.webworkers.Request
 import nl.avwie.webworkers.RequestResult
-import nl.avwie.webworkers.Response
 import org.w3c.dom.Worker
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
@@ -15,12 +11,10 @@ import kotlin.math.min
 
 class WorkerPool(size: Int, private val workerScript: String) {
 
-    class InitializedWorker(val workerId: String, val worker: Worker)
-
     data class WorkerJob<R : RequestResult>(val request: Request<R>, val continuation: Continuation<R>) {
-        suspend fun execute(worker: InitializedWorker) {
+        suspend fun execute(worker: Worker) {
             try {
-                val response = worker.worker.request(request)
+                val response = worker.request(request)
                 continuation.resume(response)
             } catch (t: Throwable) {
                 continuation.resumeWithException(t)
@@ -28,26 +22,12 @@ class WorkerPool(size: Int, private val workerScript: String) {
         }
     }
 
-    private val availableWorkers = ArrayDeque<InitializedWorker>()
+    private val availableWorkers = ArrayDeque<Worker>()
     private val queue = ArrayDeque<WorkerJob<*>>()
 
     init {
-        with(GlobalScope) {
-            launch {
-                val initializations = (0 until size).map { nr ->
-                    launch {
-                        val worker = Worker(workerScript)
-                        val workerId = "Worker [$workerScript-$nr]"
-                        worker.request(Initialize(workerId))
-                        console.log("$workerId initialized")
-                        availableWorkers.addLast(InitializedWorker(workerId, worker))
-                    }
-                }
-
-                initializations.joinAll()
-                console.log("Fully initialized")
-                checkAvailableWork()
-            }
+        repeat(size) { nr ->
+            availableWorkers.addLast(Worker("$workerScript?id=Worker-$nr"))
         }
     }
 
