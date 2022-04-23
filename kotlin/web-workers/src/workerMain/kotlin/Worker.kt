@@ -8,7 +8,7 @@ import kotlin.random.Random
 var workerId : String = "Worker"
 val isWorkerGlobalScope = js("typeof(WorkerGlobalScope) !== \"undefined\"") as? Boolean  ?: throw IllegalStateException("Boolean cast went wrong")
 
-fun main() = worker { request ->
+fun main() = handleRequest { request ->
     when (request) {
         is Initialize -> {
             workerId = request.workerId
@@ -22,22 +22,26 @@ fun main() = worker { request ->
     }
 }
 
-fun worker(block: (request: Request<*>) -> RequestResult) {
+fun workerScope(block: DedicatedWorkerGlobalScope.() -> Unit) {
     if (isWorkerGlobalScope) {
         val self = js("self") as? DedicatedWorkerGlobalScope ?: throw IllegalStateException("DedicatedWorkerGlobalScope cast went wrong")
-        self.onmessage = { messageEvent ->
-            console.log("$workerId received", messageEvent.data.toString())
-            val response = try {
-                val message = Json.decodeFromString<Message>(messageEvent.data.toString())
-                val result = block(message as Request<*>)
-                Response(result = result, error = null)
-            } catch (e: Throwable) {
-                Response(result = null, error = e.message)
-            }
-            val responseJson = Json.encodeToString(response)
-            console.log("$workerId responds", responseJson)
-            self.postMessage(responseJson)
+        block(self)
+    }
+}
+
+fun handleRequest(block: (request: Request<*>) -> RequestResult) = workerScope {
+    onmessage = { messageEvent ->
+        console.log("$workerId received", messageEvent.data.toString())
+        val response = try {
+            val message = Json.decodeFromString<Message>(messageEvent.data.toString())
+            val result = block(message as Request<*>)
+            Response(result = result, error = null)
+        } catch (e: Throwable) {
+            Response(result = null, error = e.message)
         }
+        val responseJson = Json.encodeToString(response)
+        console.log("$workerId responds", responseJson)
+        postMessage(responseJson)
     }
 }
 
