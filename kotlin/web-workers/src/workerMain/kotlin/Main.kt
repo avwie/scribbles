@@ -1,7 +1,7 @@
 import nl.avwie.webworkers.*
 import kotlin.random.Random
 
-fun main() = WorkerScope { request ->
+/*fun main() = WorkerScope.handleRequest { request ->
     when (request) {
         is PIApproximation -> {
             PIApproximationResult(approximatePI(request.iterations)).let {
@@ -9,4 +9,8 @@ fun main() = WorkerScope { request ->
             }
         }
     }
+}*/
+
+fun main() = worker {
+    receive { data -> "Sending back from $workerId: $data" }
 }

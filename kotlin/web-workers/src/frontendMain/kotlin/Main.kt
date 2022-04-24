@@ -2,8 +2,9 @@ import kotlinx.browser.document
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import nl.avwie.webworkers.PIApproximation
+import org.w3c.dom.Worker
 
-fun main() {
+/*fun main() {
     val output = document.getElementById("output")!!
     val pool = WorkerPool(10, "./worker.js")
     with(pool) {
@@ -18,4 +19,9 @@ fun main() {
             }
         }
     }
+}*/
+
+suspend fun main() = GlobalScope.launch {
+    val worker = Worker("./worker.js?id=ping-server")
+    console.log(worker.send("PING!").data.toString())
 }

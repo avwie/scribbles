@@ -1,4 +1,3 @@
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -9,34 +8,43 @@ import nl.avwie.webworkers.Response
 import org.w3c.dom.DedicatedWorkerGlobalScope
 import org.w3c.dom.url.URLSearchParams
 
-class WorkerScope(private val self: DedicatedWorkerGlobalScope) {
-    private val workerId = URLSearchParams(self.location.search).get("id") ?: "Unknown worker"
+fun worker(block: WorkerScope.() -> Unit) {
+    WorkerScope()?.let(block)
+}
 
-    private fun handleRequest(block: (request: Request<*>) -> RequestResult) {
+class WorkerScope(private val self: DedicatedWorkerGlobalScope) {
+    val workerId = URLSearchParams(self.location.search).get("id") ?: "Unknown worker"
+
+    fun receive(block: (String) -> String) {
         self.onmessage = { messageEvent ->
-            console.log("$workerId received", messageEvent.data.toString())
             val response = try {
-                val message = Json.decodeFromString<Message>(messageEvent.data.toString())
-                val result = block(message as Request<*>)
-                Response(workerId = workerId, result = result, error = null)
+                block(messageEvent.data.toString())
             } catch (e: Throwable) {
-                Response(workerId = workerId, result = null, error = e.message)
+                e.message ?: "Something went wrong"
             }
-            val responseJson = Json.encodeToString(response)
-            console.log("$workerId responds", responseJson)
-            self.postMessage(responseJson)
+            self.postMessage(response)
         }
     }
 
-    companion object {
-        private val isWorkerGlobalScope = js("typeof(WorkerGlobalScope) !== \"undefined\"") as? Boolean  ?: throw IllegalStateException("Boolean cast went wrong")
+    fun receiveRequest(block: (request: Request<*>) -> RequestResult) = receive { data ->
+        val message = Json.decodeFromString<Message>(data)
+        val response = try {
+            val result = block(message as Request<*>)
+            Response(workerId = workerId, result = result, error = null)
+        } catch (e: Throwable) {
+            Response(workerId = workerId, result = null, error = e.message)
+        }
+        Json.encodeToString(response)
+    }
 
-        operator fun invoke(block: (request: Request<*>) -> RequestResult) {
-            if (isWorkerGlobalScope) {
-                val self = js("self") as? DedicatedWorkerGlobalScope ?: throw IllegalStateException("DedicatedWorkerGlobalScope cast went wrong")
-                val workerScope = WorkerScope(self)
-                workerScope.handleRequest(block)
-            }
+    companion object {
+        operator fun invoke(): WorkerScope? {
+            val isWorkerGlobalScope = js("typeof(WorkerGlobalScope) !== \"undefined\"") as? Boolean  ?: throw IllegalStateException("Boolean cast went wrong")
+            if (!isWorkerGlobalScope) return null
+
+            val self = js("self") as? DedicatedWorkerGlobalScope
+                ?: throw IllegalStateException("DedicatedWorkerGlobalScope cast went wrong")
+            return WorkerScope(self)
         }
     }
 }
