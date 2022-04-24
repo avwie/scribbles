@@ -2,7 +2,6 @@ import kotlinx.browser.document
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import nl.avwie.webworkers.PIApproximation
-import org.w3c.dom.url.URLSearchParams
 
 fun main() {
     val output = document.getElementById("output")!!
