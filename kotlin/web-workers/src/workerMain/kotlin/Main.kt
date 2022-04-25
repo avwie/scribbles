@@ -12,7 +12,9 @@ import kotlin.random.Random
     }
 }*/
 
-suspend fun main() = worker { data, workerId ->
-    delay(1000)
-    "Sending back from $workerId: $data"
+fun main() = worker {
+    receive { data ->
+        delay(1000)
+        "Sending back from $workerId: $data"
+    }
 }

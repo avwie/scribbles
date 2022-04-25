@@ -3,15 +3,23 @@ import kotlinx.coroutines.launch
 import org.w3c.dom.DedicatedWorkerGlobalScope
 import org.w3c.dom.url.URLSearchParams
 
-suspend fun worker(block: suspend (data: String, workerId: String) -> String) {
+fun worker(block: WorkerScope.() -> Unit) {
     val isWorkerGlobalScope = js("typeof(WorkerGlobalScope) !== \"undefined\"") as? Boolean  ?: throw IllegalStateException("Boolean cast went wrong")
     if (!isWorkerGlobalScope) return
 
     val self = js("self") as? DedicatedWorkerGlobalScope ?: throw IllegalStateException("DedicatedWorkerGlobalScope cast went wrong")
+    val scope = WorkerScope(self)
+    block(scope)
+}
+
+class WorkerScope(private val self: DedicatedWorkerGlobalScope) {
     val workerId = URLSearchParams(self.location.search).get("id") ?: "Unknown worker"
-    self.onmessage = { messageEvent ->
-        GlobalScope.launch {
-            self.postMessage(block(messageEvent.data.toString(), workerId))
+
+    fun receive(block: suspend (String) -> String) {
+        self.onmessage = { messageEvent ->
+            GlobalScope.launch {
+                self.postMessage(block(messageEvent.data.toString()))
+            }
         }
     }
 }
