@@ -12,9 +12,21 @@ import kotlin.random.Random
     }
 }*/
 
-fun main() = worker {
+/*fun main() = worker {
     receive { data ->
         delay(1000)
         "Sending back from $workerId: $data"
+    }
+}*/
+
+fun main() = worker {
+    receiveRequest { request ->
+        when (request) {
+            is PIApproximation -> PIApproximationResult(approximatePI(request.iterations))
+            is Sleep -> {
+                delay(request.ms)
+                SleepResult(request.ms)
+            }
+        }
     }
 }

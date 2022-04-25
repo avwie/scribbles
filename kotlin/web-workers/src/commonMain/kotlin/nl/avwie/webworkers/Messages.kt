@@ -7,5 +7,8 @@ import kotlinx.serialization.Serializable
 @Serializable sealed interface RequestResult : Message
 @Serializable data class Response(val workerId: String, val result: RequestResult? = null, val error: String? = null): Message
 
+@Serializable data class Sleep(val ms: Long): Request<SleepResult>
+@Serializable data class SleepResult(val ms: Long): RequestResult
+
 @Serializable data class PIApproximation(val iterations: Int) : Request<PIApproximationResult>
 @Serializable data class PIApproximationResult(val pi: Double) : RequestResult

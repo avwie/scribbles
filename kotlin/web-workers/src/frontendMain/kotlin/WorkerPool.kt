@@ -1,7 +1,11 @@
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import nl.avwie.webworkers.Request
 import nl.avwie.webworkers.RequestResult
+import nl.avwie.webworkers.Response
 import org.w3c.dom.Worker
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
@@ -34,6 +38,16 @@ class WorkerPool(size: Int, private val workerScript: String) {
     suspend fun send(data: String) = suspendCoroutine<String> { continuation ->
         jobs.addLast(Job(data, continuation))
         checkAvailableWork()
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    suspend fun <R : RequestResult> request(request: Request<R>): R {
+        val data = Json.encodeToString(request as Request<RequestResult>)
+        val response = send(data)
+        val deserialized = Json.decodeFromString<Response>(response)
+
+        if (deserialized.error != null) throw WorkerException(deserialized.error)
+        return deserialized.result as R
     }
 
     private fun checkAvailableWork() {
