@@ -1,3 +1,4 @@
+import kotlinx.coroutines.delay
 import nl.avwie.webworkers.*
 import kotlin.random.Random
 
@@ -11,6 +12,7 @@ import kotlin.random.Random
     }
 }*/
 
-fun main() = worker {
-    receive { data -> "Sending back from $workerId: $data" }
+suspend fun main() = worker { data, workerId ->
+    delay(1000)
+    "Sending back from $workerId: $data"
 }

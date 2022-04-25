@@ -21,7 +21,16 @@ import org.w3c.dom.Worker
     }
 }*/
 
-suspend fun main() = GlobalScope.launch {
+/*suspend fun main() = GlobalScope.launch {
     val worker = Worker("./worker.js?id=ping-server")
     console.log(worker.send("PING!").data.toString())
+}*/
+
+suspend fun main() {
+    val pool = WorkerPool(10, "./worker.js")
+    repeat(20) { i ->
+            GlobalScope.launch {
+            console.log(pool.send("Ping $i"))
+        }
+    }
 }
