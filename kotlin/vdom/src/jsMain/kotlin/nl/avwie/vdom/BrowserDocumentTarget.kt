@@ -3,10 +3,11 @@ package nl.avwie.vdom
 import kotlinx.browser.document
 import org.w3c.dom.Element
 import org.w3c.dom.events.Event
+import org.w3c.dom.events.EventListener
 
 class BrowserDocumentTarget(private val root: Element) : Renderer.Target<Element> {
 
-    private val listeners = mutableMapOf<Pair<String, Element>, (Event) -> Unit>()
+    private val listeners = mutableMapOf<Pair<String, Element>, EventListener>()
 
     override fun createElement(name: String, namespace: String?): Element {
         return document.createElementNS(namespace, name)
@@ -33,11 +34,15 @@ class BrowserDocumentTarget(private val root: Element) : Renderer.Target<Element
     }
 
     override fun setEventHandler(element: Element, event: String, callback: () -> Unit) {
-        listeners[event to element] = { callback() }
-        element.addEventListener(event, { callback() })
+        val listener = EventListener { _ -> callback() }
+        val key = event to element
+        if (listeners.containsKey(key)) removeEventHandler(element, event)
+        listeners[key] = listener
+        element.addEventListener(event, listener)
     }
 
     override fun removeEventHandler(element: Element, event: String) {
-        element.removeEventListener(event, listeners.remove(event to element))
+        console.log("removeEventHandler: $element, $event")
+        element.removeEventListener(event, listeners.remove(event to element)!!)
     }
 }

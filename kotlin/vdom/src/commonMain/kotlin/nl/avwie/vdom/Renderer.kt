@@ -119,6 +119,7 @@ class Renderer<Msg, T>(private val target: Target<T>, private val dispatcher: Di
             target.setAttribute(element, key, value)
         }
         node.events.forEach { (event, msg) ->
+            println("renderNodeWithoutChildren")
             target.setEventHandler(element, event) {
                 dispatcher.dispatch(msg)
             }

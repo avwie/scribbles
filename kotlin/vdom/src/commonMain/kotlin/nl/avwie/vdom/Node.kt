@@ -29,8 +29,8 @@ data class Node<Msg>(
 
         operator fun String.invoke(block: BuilderScope<Msg>.() -> Unit = {}) = node(this, block)
 
-        infix fun String.by(value: String) {
-            attributes[this] = value
+        infix fun String.by(value: Any) {
+            attributes[this] = value.toString()
         }
 
         operator fun String.unaryPlus() {
@@ -45,8 +45,8 @@ fun <Msg> node(name: String, namespace: String? = null, block: Node.BuilderScope
     return scope.build()
 }
 
-fun <Msg> html(block: Node.BuilderScope<Msg>.() -> Unit) = node("html", "http://www.w3.org/1999/xhtml", block)
-fun <Msg> svg(block: Node.BuilderScope<Msg>.() -> Unit) = node<Msg>("svg", "http://www.w3.org/2000/svg") {
-    attributes["version"] = "1.1"
+fun <Msg> html(root: String = "html", block: Node.BuilderScope<Msg>.() -> Unit) = node(root, "http://www.w3.org/1999/xhtml", block)
+fun <Msg> svg(root: String = "svg", block: Node.BuilderScope<Msg>.() -> Unit) = node<Msg>(root, "http://www.w3.org/2000/svg") {
+    if (root == "svg") attributes["version"] = "1.1"
     block()
 }
