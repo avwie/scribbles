@@ -31,6 +31,7 @@ fun main() {
     val target = BrowserDocumentTarget(container)
     val mvu = MVU(
         target = target,
+        context = BrowserContext(),
         initialState = initialState(),
         render = ::render,
         update = ::update

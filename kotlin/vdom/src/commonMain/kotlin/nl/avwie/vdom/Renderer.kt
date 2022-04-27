@@ -26,22 +26,9 @@ class Renderer<Msg, T>(private val target: Target<T>, private val dispatcher: Di
 
     private fun updateNode(current: Mounted<Msg, T>, updated: Node<Msg>): Mounted<Msg, T> {
         return when {
-            current.node == updated -> {
-                println("Same: ${current.node.name} & ${updated.name}")
-                if (current.node.name == "svg") {
-                    println(current.node)
-                    println(updated)
-                }
-                current
-            }
-            current.node.name != updated.name -> {
-                println("Name different: ${current.node.name} & ${updated.name}")
-                replaceNode(current, updated)
-            }
-            else -> {
-                println("Update: ${current.node.name} & ${updated.name}")
-                updateNodeDetailed(current, updated)
-            }
+            current.node == updated -> current
+            current.node.name != updated.name -> replaceNode(current, updated)
+            else -> updateNodeDetailed(current, updated)
         }
     }
 

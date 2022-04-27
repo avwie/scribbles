@@ -1,13 +1,14 @@
 package nl.avwie.vdom
 
-typealias Update<Model, Message> = (model: Model, message: Message) -> Model
+typealias Update<Model, Message, Context> = (model: Model, message: Message, ctx: Context) -> Model
 typealias Render<Model, Message> = (model: Model) -> Node<Message>
 
-class MVU<Model, Message>(
+open class MVU<Model, Message, Context>(
     target: Renderer.Target<*>,
     initialState: Model,
+    private val context: Context,
     private val render: Render<Model, Message>,
-    private val update: Update<Model, Message>,
+    private val update: Update<Model, Message, Context>,
 ): Dispatcher<Message> {
 
     var state = initialState
@@ -20,8 +21,7 @@ class MVU<Model, Message>(
     }
 
     override fun dispatch(message: Message) {
-        if (message is Materializable) message.materialize()
-        state = update(state, message)
+        state = update(state, message, context)
         renderer.render(render(state))
     }
 }

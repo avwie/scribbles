@@ -34,7 +34,10 @@ class BrowserDocumentTarget(private val root: Element) : Renderer.Target<Element
     }
 
     override fun setEventHandler(element: Element, event: String, callback: () -> Unit) {
-        val listener = EventListener { _ -> callback() }
+        val listener = EventListener { e ->
+            e.preventDefault()
+            callback()
+        }
         val key = event to element
         if (listeners.containsKey(key)) removeEventHandler(element, event)
         listeners[key] = listener
