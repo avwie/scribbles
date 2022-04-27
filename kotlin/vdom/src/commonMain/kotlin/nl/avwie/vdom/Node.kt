@@ -39,12 +39,6 @@ data class Node<Msg>(
             events[name] = message
         }
 
-        fun attr(key: String, value: Any) {
-            attributes[key] = value.toString()
-        }
-
-        fun attr(kv: Pair<String, Any>) = attr(kv.first, kv.second)
-
         operator fun String.invoke(block: BuilderScope<Msg>.() -> Unit = {}) = node(
             name = this, namespace = namespace, attrs = arrayOf(), block = block
         )
@@ -52,10 +46,6 @@ data class Node<Msg>(
         operator fun String.invoke(vararg attrs: Pair<String, Any>, block: BuilderScope<Msg>.() -> Unit = {}) = node(
             name = this, namespace = namespace, attrs = attrs, block = block
         )
-
-        infix fun String.by(value: Any): Pair<String, Any>  {
-            return this to value
-        }
 
         operator fun String.unaryPlus() {
             text = this
@@ -71,6 +61,9 @@ fun <Msg> node(name: String, namespace: String? = null, vararg attrs: Pair<Strin
 
 fun <Msg> html(root: String = "html", vararg attrs: Pair<String, Any>, block: Node.BuilderScope<Msg>.() -> Unit) = node(
     name = root, namespace = "http://www.w3.org/1999/xhtml", attrs = attrs, block = block)
+
+fun <Msg> svg(vararg attrs: Pair<String, Any> = arrayOf(), block: Node.BuilderScope<Msg>.() -> Unit) = svg<Msg>(
+    root = "svg", attrs = attrs, block = block)
 
 fun <Msg> svg(root: String = "svg", vararg attrs: Pair<String, Any> = arrayOf(), block: Node.BuilderScope<Msg>.() -> Unit) =
     node<Msg>(name = root, namespace = "http://www.w3.org/2000/svg", attrs = attrs) {
