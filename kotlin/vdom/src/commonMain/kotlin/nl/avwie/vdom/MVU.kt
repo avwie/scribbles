@@ -20,6 +20,7 @@ class MVU<Model, Message>(
     }
 
     override fun dispatch(message: Message) {
+        if (message is Materializable) message.materialize()
         state = update(state, message)
         renderer.render(render(state))
     }

@@ -18,12 +18,10 @@ private fun initialState(): Model = Model(
        Item(
             entityId = uuid(),
             position = Position.Grid(0, 0),
-            name = "Foo"
         ),
         Item(
             entityId = uuid(),
             position = Position.Grid(2, 2),
-            name = "Bar"
         )
     )
 )
@@ -35,9 +33,6 @@ fun main() {
         target = target,
         initialState = initialState(),
         render = ::render,
-        update = { model, message ->
-            console.log(message)
-            model
-        }
+        update = ::update
     )
 }

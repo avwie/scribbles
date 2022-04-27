@@ -42,7 +42,6 @@ class BrowserDocumentTarget(private val root: Element) : Renderer.Target<Element
     }
 
     override fun removeEventHandler(element: Element, event: String) {
-        console.log("removeEventHandler: $element, $event")
         element.removeEventListener(event, listeners.remove(event to element)!!)
     }
 }

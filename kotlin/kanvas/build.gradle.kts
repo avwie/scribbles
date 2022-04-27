@@ -20,6 +20,8 @@ kotlin {
         binaries.executable()
     }
 
+    jvm()
+
     sourceSets {
         val commonMain by getting {
             dependencies {

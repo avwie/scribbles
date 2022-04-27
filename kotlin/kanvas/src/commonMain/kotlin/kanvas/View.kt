@@ -63,8 +63,9 @@ fun View.items(items: List<Item>, grid: Grid) = layer("items") {
             "width" by width
             "height" by height
             "rx" by grid.offsetX()
+            "fill" by (if (item.selected) "#ff0000" else "#00ff00")
 
-            event("click", MouseClick(item.entityId, 0.0, 0.0))
+            event("click", MouseClick(item.entityId))
         }
     }
 }

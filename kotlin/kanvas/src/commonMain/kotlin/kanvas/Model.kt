@@ -24,7 +24,7 @@ data class Grid(
 data class Item(
     val entityId: UUID,
     val position: Position,
-    val name: String
+    val selected: Boolean = false
 )
 
 sealed interface Position {
