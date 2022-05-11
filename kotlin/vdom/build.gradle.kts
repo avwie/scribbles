@@ -6,7 +6,7 @@ rootProject.plugins.withType<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJ
     rootProject.the<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension>().nodeVersion = "16.0.0"
 }
 
-group = "nl.avwie.dom"
+group = "nl.avwie.vdom"
 version = "1.0-SNAPSHOT"
 
 repositories {

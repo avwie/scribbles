@@ -81,8 +81,9 @@ fun main() {
     val mvu = MVU(
         target = target,
         initialState = initState(100, 1280.0, 1024.0),
+        context = Unit,
         render = { model: State -> renderState(model) },
-        update = { model: State, message: Message ->
+        update = { model: State, message: Message, _: Unit ->
             when (message) {
                 is Tick -> updateState(model, message.dt.toDouble())
                 is Click -> {

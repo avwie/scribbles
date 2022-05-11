@@ -3,6 +3,9 @@ plugins {
     kotlin("multiplatform")
 }
 
+group = "nl.avwie.web-workers"
+version = "1.0-SNAPSHOT"
+
 repositories {
     mavenCentral()
 }
@@ -40,8 +43,8 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")
+                implementation(Dependencies.KotlinXSerializationJson)
+                implementation(Dependencies.KotlinXCoroutinesCore)
             }
         }
         val commonTest by getting {

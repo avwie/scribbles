@@ -2,7 +2,7 @@ plugins {
     kotlin("multiplatform")
 }
 
-group = "nl.avwie.kanvas"
+group = "nl.avwie.crdt"
 version = "1.0-SNAPSHOT"
 
 repositories {
@@ -10,19 +10,18 @@ repositories {
 }
 
 kotlin {
+    jvm()
 
     js(IR) {
         browser()
-        binaries.executable()
     }
 
-    jvm()
 
     sourceSets {
         val commonMain by getting {
             dependencies {
                 implementation(project(":common"))
-                implementation(project(":vdom"))
+                implementation(Dependencies.KotlinXDateTime)
             }
         }
         val commonTest by getting {

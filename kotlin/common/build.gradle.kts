@@ -2,11 +2,7 @@ plugins {
     kotlin("multiplatform")
 }
 
-rootProject.plugins.withType<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin> {
-    rootProject.the<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension>().nodeVersion = "16.0.0"
-}
-
-group = "nl.avwie.dom"
+group = "nl.avwie.common"
 version = "1.0-SNAPSHOT"
 
 repositories {
@@ -30,7 +26,7 @@ kotlin {
 
         val jsMain by getting {
             dependencies {
-                implementation(npm("uuid", "8.3.2"))
+                implementation(npm(Dependencies.NpmUUID, Versions.NpmUUID))
             }
         }
     }

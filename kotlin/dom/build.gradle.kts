@@ -30,7 +30,7 @@ kotlin {
 
         val jsMain by getting {
             dependencies {
-                implementation(npm("virtual-dom", "2.1.1"))
+                implementation(npm(Dependencies.NpmVirtualDom, Versions.NpmVirtualDom))
             }
         }
     }

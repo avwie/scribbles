@@ -39,6 +39,10 @@ data class Node<Msg>(
             events[name] = message
         }
 
+        infix fun String.by(value: Any) {
+            attributes[this] = value.toString()
+        }
+
         operator fun String.invoke(block: BuilderScope<Msg>.() -> Unit = {}) = node(
             name = this, namespace = namespace, attrs = arrayOf(), block = block
         )
