@@ -1,5 +1,6 @@
 plugins {
     kotlin("multiplatform")
+    kotlin("plugin.serialization")
 }
 
 group = "nl.avwie.crdt"
@@ -21,6 +22,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(project(":common"))
+                implementation(Dependencies.KotlinXSerializationJson)
                 implementation(Dependencies.KotlinXDateTime)
             }
         }

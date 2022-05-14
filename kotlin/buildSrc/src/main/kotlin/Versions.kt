@@ -3,6 +3,7 @@ object Versions {
     const val JetbrainsCompose = "1.1.1"
     const val NpmUUID = "8.3.2"
     const val NpmVirtualDom = "2.1.1"
+    const val KotlinXSerializationCore = "1.3.2"
     const val KotlinXSerializationJson = "1.3.2"
     const val KotlinXCoroutinesCore = "1.6.1"
     const val KotlinXDateTime = "0.3.2"

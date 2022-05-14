@@ -1,32 +1,42 @@
 package nl.avwie.crdt
 
+import kotlinx.serialization.SerialName
+
+@kotlinx.serialization.Serializable
 class PokerState constructor(
-    private val nameCell: LWWCell<String>,
-    val participants: TwoPhaseSet<Participant, String>
+    private val _name: LWWCell<String>,
+    val participants: ObservedRemovedSet<Participant, String>
 ) : Mergeable<PokerState> {
 
-    var name by nameCell
+    var name by _name
 
-    constructor(name: String) : this(name.toLLWCell(), twoPhaseSetOf { it.name })
+    constructor(name: String) : this(name.toLWWCell(), observedRemovedSetOf(tombstoneStrategy = Participant.Tombstones))
 
     override fun merge(other: PokerState): PokerState = PokerState(
-        merge(nameCell, other.nameCell),
-        merge(participants, other.participants)
+        _name = merge(_name, other._name),
+        participants = merge(participants, other.participants)
     )
 }
 
+@kotlinx.serialization.Serializable
 class Participant(
-    private val nameCell: LWWCell<String>,
-    private val pokerValueCell: LWWCell<Int?>
+    private val _name: LWWCell<String>,
+    private val _pokerValue: LWWCell<Int>
 ) : Mergeable<Participant> {
 
-    var name by nameCell
-    var pokerValue by pokerValueCell
+    var name by _name
+    var pokerValue by _pokerValue
 
-    constructor(name: String) : this(name.toLLWCell(), null.toLLWCell())
+    constructor(name: String) : this(name.toLWWCell(), (-1).toLWWCell())
 
     override fun merge(other: Participant): Participant = Participant(
-        merge(nameCell, other.nameCell),
-        merge(pokerValueCell, other.pokerValueCell)
+        _name = merge(_name, other._name),
+        _pokerValue = merge(_pokerValue, other._pokerValue)
     )
+
+    @kotlinx.serialization.Serializable
+    @SerialName("participant")
+    object Tombstones : TombstoneResolver<Participant, String> {
+        override fun tombstoneOf(item: Participant): String = item.name
+    }
 }

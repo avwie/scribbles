@@ -1,10 +1,11 @@
 package nl.avwie.crdt
 
+@kotlinx.serialization.Serializable
 class GrowOnlySet<T>(
-    private val backingSet: MutableSet<T> = mutableSetOf<T>()
-) : Mergeable<GrowOnlySet<T>>, Set<T> by backingSet  {
+    private val elements: MutableSet<T> = mutableSetOf()
+) : Mergeable<GrowOnlySet<T>>, Set<T> by elements  {
 
-    fun add(element: T): Boolean = backingSet.add(element)
+    fun add(element: T): Boolean = elements.add(element)
     fun addAll(elements: Collection<T>): Boolean = elements.map(::add).any()
 
     override fun merge(other: GrowOnlySet<T>): GrowOnlySet<T> {
@@ -15,4 +16,4 @@ class GrowOnlySet<T>(
     }
 }
 
-fun <T> growOnlySetOf(vararg elements: T): GrowOnlySet<T> = GrowOnlySet(backingSet = mutableSetOf(*elements))
+fun <T> growOnlySetOf(vararg elements: T): GrowOnlySet<T> = GrowOnlySet(elements = mutableSetOf(*elements))

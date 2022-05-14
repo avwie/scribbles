@@ -27,21 +27,4 @@ class KanvasTests {
             )
         )
     )
-
-    @Test
-    fun bug() {
-        val target = TestRendererTarget()
-        val uuid1 = uuid()
-        val uuid2 = uuid()
-        val mvu = MVU(
-            target = target,
-            initialState = initialState(uuid1, uuid2),
-            render = ::render,
-            update = ::update
-        )
-
-        val message = MouseClick(uuid2)
-        mvu.dispatch(message)
-        mvu.dispatch(message)
-    }
 }
