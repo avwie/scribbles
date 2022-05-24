@@ -3,12 +3,19 @@ package nl.avwie.crdt.convergent
 import kotlinx.collections.immutable.*
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.builtins.MapSerializer
+import kotlinx.serialization.builtins.SetSerializer
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.encoding.*
+import kotlinx.serialization.serializer
 
-@kotlinx.serialization.Serializable
+@kotlinx.serialization.Serializable(with = MergeableMapSerializer::class)
 data class MergeableMap<K, V>(
-    private val map: PersistentMap<K, V>,
-    private val timestamps: PersistentMap<K, Instant>,
-    private val tombstones: PersistentSet<K>
+    val map: PersistentMap<K, V>,
+    val timestamps: PersistentMap<K, Instant>,
+    val tombstones: PersistentSet<K>
 ): Map<K, V> by map, Mergeable<MergeableMap<K, V>> {
 
     fun put(key: K, value: V): MergeableMap<K, V> = when {
@@ -77,6 +84,43 @@ data class MergeableMap<K, V>(
             timestamps = timestampsBuilder.build(),
             tombstones = allTombstones
         )
+    }
+}
+
+class MergeableMapSerializer<K, V>(keySerializer: KSerializer<K>, valueSerializer: KSerializer<V>) : KSerializer<MergeableMap<K, V>> {
+
+    private val mapSerializer = MapSerializer(keySerializer, valueSerializer)
+    private val timestampsSerializer = MapSerializer(keySerializer, Instant.serializer())
+    private val tombstonesSerializer = SetSerializer(keySerializer)
+
+    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("mergeableMap") {
+        element("map", descriptor = mapSerializer.descriptor)
+        element("timestamps", descriptor = timestampsSerializer.descriptor)
+        element("tombstones", descriptor = tombstonesSerializer.descriptor)
+    }
+
+    override fun serialize(encoder: Encoder, value: MergeableMap<K, V>) {
+        encoder.encodeStructure(descriptor) {
+            encodeSerializableElement(descriptor, 0, mapSerializer, value.map)
+            encodeSerializableElement(descriptor, 1, timestampsSerializer, value.timestamps)
+            encodeSerializableElement(descriptor, 2, tombstonesSerializer, value.tombstones)
+        }
+    }
+
+    override fun deserialize(decoder: Decoder): MergeableMap<K, V> = decoder.decodeStructure(descriptor) {
+        var map: Map<K, V> = mapOf()
+        var timestamps: Map<K, Instant> = mapOf()
+        var tombstones: Set<K> = setOf()
+
+        while (true) {
+            when (val index = decodeElementIndex(descriptor)) {
+                0 -> map = decodeSerializableElement(descriptor, 0, mapSerializer)
+                1 -> timestamps = decodeSerializableElement(descriptor, 1, timestampsSerializer)
+                2 -> tombstones = decodeSerializableElement(descriptor, 2, tombstonesSerializer)
+                CompositeDecoder.DECODE_DONE -> break
+            }
+        }
+        MergeableMap(map.toPersistentMap(), timestamps.toPersistentMap(), tombstones.toPersistentSet())
     }
 }
 

@@ -1,6 +1,9 @@
 package nl.avwie.crdt.convergent
 
 import common.sleep
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import kotlin.js.JsName
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -46,5 +49,13 @@ class MergeableValueTests {
         assertEquals(3, merge(b, a, c).value)
         assertEquals(3, merge(c, a, b).value)
         assertEquals(3, merge(c, b, a).value)
+    }
+
+    @Test
+    fun serialize() {
+        val x = mergeableValueOf("Foo")
+        val serialized = Json.encodeToString(x)
+        val deserialied = Json.decodeFromString<MergeableValue<String>>(serialized)
+        assertEquals(x, deserialied)
     }
 }

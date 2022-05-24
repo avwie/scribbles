@@ -1,4 +1,4 @@
-import nl.avwie.crdt.poker.PokerState
+import model.Model
 import org.jetbrains.compose.web.renderComposable
 import ui.PokerApp
 
@@ -8,14 +8,10 @@ enum class Mode {
 }
 
 fun main() {
-    val repository = LocalStorageRepository<PokerState>("POKER")
-    val viewModel = AppViewModel(
-        initialState = PokerState("Poker!"),
-        repository = repository
-    )
+    val repository = LocalStorageRepository<Model>("POKER")
 
     renderComposable("root") {
-        PokerApp(viewModel)
+        //PokerApp(viewModel)
         /*val (mode, setMode) = remember { mutableStateOf(Mode.Lobby) }
         val state = storage.state
 

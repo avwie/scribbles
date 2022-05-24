@@ -1,10 +1,10 @@
 package nl.avwie.crdt.convergent
 
 import common.sleep
-import kotlin.test.Test
-import kotlin.test.assertFailsWith
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlin.test.*
 
 class MergeableSetTests {
 
@@ -58,6 +58,17 @@ class MergeableSetTests {
 
         assertTrue { listOf(1, 3, 4).all { c.contains(it) } }
         assertFalse { c.contains(2) }
+    }
+
+    @Test
+    fun serialize() {
+        val a = mergeableSetOf(1, 2, 3).remove(2)
+        val b = mergeableSetOf(2, 3, 4)
+        val c = merge(a, b)
+
+        val serialized = Json.encodeToString(c)
+        val deserialized = Json.decodeFromString<MergeableSet<Int, Int>>(serialized)
+        assertEquals(c, deserialized)
     }
 
     @Test
