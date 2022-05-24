@@ -1,5 +1,6 @@
 plugins {
     kotlin("multiplatform")
+    kotlin("plugin.serialization")
 }
 
 group = "nl.avwie.common"
@@ -17,7 +18,11 @@ kotlin {
 
 
     sourceSets {
-        val commonMain by getting
+        val commonMain by getting {
+            dependencies {
+                implementation(Dependencies.KotlinXSerializationCore)
+            }
+        }
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))

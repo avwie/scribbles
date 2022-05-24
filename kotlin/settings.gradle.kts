@@ -9,3 +9,4 @@ include("crdt")
 
 include("examples:dom-demo")
 include("examples:vdom-demo")
+include("examples:poker-demo")
