@@ -3,7 +3,6 @@ package ui
 import AppViewModel
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import nl.avwie.crdt.poker.PokerState
 import org.jetbrains.compose.web.dom.H1
 import org.jetbrains.compose.web.dom.Text
 

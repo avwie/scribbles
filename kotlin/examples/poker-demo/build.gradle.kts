@@ -29,6 +29,7 @@ kotlin {
                 implementation(Dependencies.KotlinXSerializationJson)
                 implementation(project(":common"))
                 implementation(project(":crdt"))
+                implementation(compose.runtime)
             }
         }
         val commonTest by getting {
@@ -40,7 +41,6 @@ kotlin {
         val webMain by getting {
             dependencies {
                 implementation(compose.web.core)
-                implementation(compose.runtime)
             }
         }
     }

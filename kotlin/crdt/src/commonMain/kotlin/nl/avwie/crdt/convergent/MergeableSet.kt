@@ -1,9 +1,5 @@
 package nl.avwie.crdt.convergent
 
-import kotlinx.collections.immutable.PersistentSet
-import kotlinx.collections.immutable.persistentSetOf
-import kotlinx.collections.immutable.toPersistentSet
-
 @kotlinx.serialization.Serializable
 data class MergeableSet<T, K>(
     private val underlyingMap: MergeableMap<K, T>,
@@ -11,7 +7,7 @@ data class MergeableSet<T, K>(
 ): Set<T>, Mergeable<MergeableSet<T, K>> {
 
     fun add(element: T): MergeableSet<T, K> = copy(
-        underlyingMap = underlyingMap.add(key(element), element)
+        underlyingMap = underlyingMap.put(key(element), element)
     )
 
     fun addAll(elements: Iterable<T>) = elements.fold(this) { acc, el -> acc.add(el) }

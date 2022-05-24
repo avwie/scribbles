@@ -74,18 +74,4 @@ class MergeableSetTests {
         assertTrue { c.contains(mergeableValueOf("BAR")) }
         assertFalse { c.contains(mergeableValueOf("Bar")) }
     }
-
-    @Test
-    fun mergeWithFailure() {
-        val keyResolver = object : KeyResolver<String, String> {
-            override fun key(item: String): String = item.lowercase()
-        }
-
-        val a = mergeableSetOf("Foo", "Bar", keyResolver = keyResolver)
-        sleep(1)
-        val b = mergeableSetOf("BAR", "Baz", keyResolver = keyResolver)
-        assertFailsWith<IllegalStateException> {
-            merge(a, b)
-        }
-    }
 }
