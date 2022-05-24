@@ -6,61 +6,44 @@ import kotlinx.collections.immutable.toPersistentSet
 
 @kotlinx.serialization.Serializable
 data class MergeableSet<T, K>(
-    private val elements: PersistentSet<T>,
-    private val tombstones: PersistentSet<K>,
+    private val underlyingMap: MergeableMap<K, T>,
     private val keyResolver: KeyResolver<T, K>? = null
-): Set<T> by elements, Mergeable<MergeableSet<T, K>> {
+): Set<T>, Mergeable<MergeableSet<T, K>> {
 
-    fun add(element: T): MergeableSet<T, K> = when {
-        tombstones.contains(key(element)) -> this
-        else -> copy(elements = elements.add(element))
-    }
+    fun add(element: T): MergeableSet<T, K> = copy(
+        underlyingMap = underlyingMap.add(key(element), element)
+    )
 
-    fun addAll(elements: Iterable<T>): MergeableSet<T, K> = elements.fold(this) { acc, element -> acc.add(element)  }
-    fun addAll(vararg elements: T): MergeableSet<T, K> = addAll(elements.asIterable())
+    fun addAll(elements: Iterable<T>) = elements.fold(this) { acc, el -> acc.add(el) }
+    fun addAll(vararg elements: T) = addAll(elements.asIterable())
 
-    fun remove(element: T): MergeableSet<T, K> = when {
-        tombstones.contains(key(element)) -> this
-        else -> copy(
-            elements = elements.remove(element),
-            tombstones = tombstones.add(key(element))
-        )
-    }
+    fun remove(element: T): MergeableSet<T, K> = copy(
+        underlyingMap = underlyingMap.remove(key(element))
+    )
 
-    fun removeAll(elements: Iterable<T>): MergeableSet<T, K> = elements.fold(this) { acc, element -> acc.remove(element) }
-    fun removeAll(vararg elements: T): MergeableSet<T, K> = removeAll(elements.asIterable())
+    fun removeAll(elements: Iterable<T>) = elements.fold(this) { acc, el -> acc.remove(el) }
+    fun removeAll(vararg elements: T) = removeAll(elements.asIterable())
 
-    override fun merge(other: MergeableSet<T, K>): MergeableSet<T, K> {
-        val allTombstones = tombstones.addAll(other.tombstones)
-        val leftElements = elements.filter { !allTombstones.contains(key(it)) }.associateBy { key(it) }
-        val rightElements = other.elements.filter { !allTombstones.contains(key(it)) }.associateBy { key(it) }
+    override val size: Int  get() = underlyingMap.size
+    override fun contains(element: T): Boolean = underlyingMap.containsValue(element)
+    override fun containsAll(elements: Collection<T>): Boolean = elements.all(::contains)
+    override fun isEmpty(): Boolean = underlyingMap.isEmpty()
+    override fun iterator(): Iterator<T> = underlyingMap.values.iterator()
 
-        val intersectKeys = leftElements.keys.intersect(rightElements.keys)
-        val differenceKeys = (leftElements.keys + rightElements.keys) - intersectKeys
-
-        val difference = leftElements.filterKeys { differenceKeys.contains(it) } + rightElements.filterKeys { differenceKeys.contains(it) }
-        val intersect =  intersectKeys.map { key ->
-            val (left, right) = leftElements[key]!! to rightElements[key]!!
-
-            @Suppress("UNCHECKED_CAST")
-            when (left) {
-                right -> right
-                is Mergeable<*> -> (left  as Mergeable<T>).merge(right)
-                else -> throw IllegalStateException("Impossible to merge two values with same keys that aren't mergable!")
-            }
-        }
-
-        return copy(
-            elements = (difference.values + intersect).toPersistentSet(),
-            tombstones = allTombstones
-        )
-    }
+    override fun merge(other: MergeableSet<T, K>): MergeableSet<T, K> = copy(
+        underlyingMap = underlyingMap.merge(other.underlyingMap)
+    )
 
     @Suppress("UNCHECKED_CAST")
     private fun key(element: T): K = keyResolver?.key(element) ?: element as K
 }
 
-fun <T, K> mergeableSetOf(elements: Iterable<T>, keyResolver: KeyResolver<T, K>?): MergeableSet<T, K> = MergeableSet(elements.toPersistentSet(), persistentSetOf(), keyResolver)
+@Suppress("UNCHECKED_CAST")
+fun <T, K> mergeableSetOf(elements: Iterable<T>, keyResolver: KeyResolver<T, K>?): MergeableSet<T, K> = elements.map { value ->
+    val key = keyResolver?.key(value) ?: value as K
+    key to value
+}.toMap().let { map ->  MergeableSet(mergeableMapOf(map), keyResolver) }
+
 fun <T> mergeableSetOf(elements: Iterable<T>): MergeableSet<T, T> = mergeableSetOf(elements, null)
 fun <T, K> mergeableSetOf(vararg elements: T, keyResolver: KeyResolver<T, K>?): MergeableSet<T, K> = mergeableSetOf(elements.asIterable(), keyResolver)
 fun <T> mergeableSetOf(vararg elements: T): MergeableSet<T, T> = mergeableSetOf(elements.asIterable(), null)

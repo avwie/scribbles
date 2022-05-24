@@ -1,9 +1,8 @@
 package nl.avwie.crdt.convergent
 
-import kotlinx.collections.immutable.PersistentMap
-import kotlinx.collections.immutable.PersistentSet
-import kotlinx.collections.immutable.toPersistentMap
+import kotlinx.collections.immutable.*
 
+@kotlinx.serialization.Serializable
 data class MergeableMap<K, V>(
     private val map: PersistentMap<K, V>,
     private val tombstones: PersistentSet<K>
@@ -14,8 +13,9 @@ data class MergeableMap<K, V>(
         else -> copy(map = map.put(key, value))
     }
 
-    fun remove(key: K, value: V): MergeableMap<K, V> = when {
+    fun remove(key: K): MergeableMap<K, V> = when {
         tombstones.contains(key) -> this
+        !map.containsKey(key) -> this
         else -> copy(
             map = map.remove(key),
             tombstones = tombstones.add(key)
@@ -50,3 +50,8 @@ data class MergeableMap<K, V>(
         )
     }
 }
+
+fun <K, V> mergeableMapOf(map: Map<K, V>): MergeableMap<K, V> = MergeableMap(map.toPersistentMap(), persistentSetOf())
+fun <K, V> mergeableMapOf(pairs: Iterable<Pair<K, V>>): MergeableMap<K, V> = mergeableMapOf(pairs.toMap())
+fun <K, V> mergeableMapOf(vararg pairs: Pair<K, V>): MergeableMap<K, V> = mergeableMapOf(pairs.asIterable())
+fun <K, V> mergeabeMapOf(): MergeableMap<K, V> = MergeableMap(persistentMapOf(), persistentSetOf())

@@ -15,6 +15,15 @@ class MergeableSetTests {
     }
 
     @Test
+    fun addWithTombstone() {
+        val a = mergeableSetOf(1, 3).remove(2).add(2)
+        assertTrue { a.contains(2) }
+
+        val b = mergeableSetOf(1, 2, 3).remove(2).add(2)
+        assertFalse { b.contains(2) }
+    }
+
+    @Test
     fun addAll() {
         val a = mergeableSetOf(1, 2, 3).addAll(4, 5, 6)
         assertTrue { listOf(1, 2, 3, 4, 5, 6).all { a.contains(it) } }
