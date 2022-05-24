@@ -7,4 +7,5 @@ object Versions {
     const val KotlinXSerializationJson = "1.3.2"
     const val KotlinXCoroutinesCore = "1.6.1"
     const val KotlinXDateTime = "0.3.2"
+    const val KotlinXImmutableCollections = "0.3.5"
 }

@@ -6,4 +6,5 @@ object Dependencies {
     val KotlinXSerializationJson = "org.jetbrains.kotlinx:kotlinx-serialization-json:${Versions.KotlinXSerializationJson}"
     val KotlinXCoroutinesCore = "org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.KotlinXCoroutinesCore}"
     val KotlinXDateTime = "org.jetbrains.kotlinx:kotlinx-datetime:${Versions.KotlinXDateTime}"
+    val KotlinXImmutableCollections = "org.jetbrains.kotlinx:kotlinx-collections-immutable:${Versions.KotlinXImmutableCollections}"
 }
