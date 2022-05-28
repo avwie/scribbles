@@ -46,37 +46,9 @@ data class MergeableMap<K, V>(
         allKeys.forEach { key ->
             val (left, right) = get(key) to other.get(key)
             val (timestampLeft, timestampRight) = timestamps[key] to other.timestamps[key]
-            when {
-                left != null && right == null -> {
-                    elementsBuilder[key] = left
-                    timestampsBuilder[key] = timestamps[key]!!
-                }
-
-                left == null && right != null -> {
-                    elementsBuilder[key] = right
-                    timestampsBuilder[key] = timestampRight!!
-                }
-
-                timestampLeft!! > timestampRight!! -> {
-                    elementsBuilder[key] = left!!
-                    timestampsBuilder[key] = timestampLeft
-                }
-
-                timestampLeft < timestampRight -> {
-                    elementsBuilder[key] = right!!
-                    timestampsBuilder[key] = timestampRight
-                }
-
-                left.hashCode() >= right!!.hashCode() ->  {
-                    elementsBuilder[key] = left!!
-                    timestampsBuilder[key] = timestampLeft
-                }
-
-                left.hashCode() < right.hashCode() ->  {
-                    elementsBuilder[key] = right
-                    timestampsBuilder[key] = timestampRight
-                }
-            }
+            val (element, elementTimestamp) = determine(left, right, timestampLeft, timestampRight)
+            elementsBuilder[key] = element
+            timestampsBuilder[key] = elementTimestamp
         }
 
         return MergeableMap(
@@ -84,6 +56,24 @@ data class MergeableMap<K, V>(
             timestamps = timestampsBuilder.build(),
             tombstones = allTombstones
         )
+    }
+
+    private fun determine(
+        left: V?,
+        right: V?,
+        leftTimestamp: Instant?,
+        rightTimestamp: Instant?
+    ): Pair<V, Instant> = when {
+        left != null && right == null -> left to leftTimestamp!!
+        left == null && right != null -> right to rightTimestamp!!
+
+        left == null || right == null -> throw IllegalStateException("Items can't be null now")
+        leftTimestamp == null || rightTimestamp == null -> throw IllegalStateException("Timestamps can't be null")
+
+        leftTimestamp >= rightTimestamp -> left to leftTimestamp
+        leftTimestamp < rightTimestamp -> right to rightTimestamp
+        left.hashCode() >= right.hashCode() -> left to leftTimestamp
+        else -> right to rightTimestamp
     }
 }
 
@@ -114,9 +104,9 @@ class MergeableMapSerializer<K, V>(keySerializer: KSerializer<K>, valueSerialize
 
         while (true) {
             when (val index = decodeElementIndex(descriptor)) {
-                0 -> map = decodeSerializableElement(descriptor, 0, mapSerializer)
-                1 -> timestamps = decodeSerializableElement(descriptor, 1, timestampsSerializer)
-                2 -> tombstones = decodeSerializableElement(descriptor, 2, tombstonesSerializer)
+                0 -> map = decodeSerializableElement(descriptor, index, mapSerializer)
+                1 -> timestamps = decodeSerializableElement(descriptor, index, timestampsSerializer)
+                2 -> tombstones = decodeSerializableElement(descriptor, index, tombstonesSerializer)
                 CompositeDecoder.DECODE_DONE -> break
             }
         }

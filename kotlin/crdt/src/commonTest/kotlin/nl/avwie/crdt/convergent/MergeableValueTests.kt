@@ -55,7 +55,7 @@ class MergeableValueTests {
     fun serialize() {
         val x = mergeableValueOf("Foo")
         val serialized = Json.encodeToString(x)
-        val deserialied = Json.decodeFromString<MergeableValue<String>>(serialized)
-        assertEquals(x, deserialied)
+        val deserialized = Json.decodeFromString<MergeableValue<String>>(serialized)
+        assertEquals(x, deserialized)
     }
 }

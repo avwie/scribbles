@@ -1,63 +1,49 @@
-import model.Model
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
+import externals.history.createBrowserHistory
+import kotlinx.browser.window
 import org.jetbrains.compose.web.renderComposable
-import ui.PokerApp
+import router.Route
+import router.Router
+import router.createRouting
+import router.fragment.Text
+import router.fragment.UUID
+import ui.ErrorPage
+import ui.JoinPage
+import ui.LandingPage
+import ui.Roompage
+import view.AppViewModel
 
-enum class Mode {
-    Lobby,
-    Poker
+val routing = createRouting<Route>(Route.Error) {
+    matchPathName("/") { Route.LandingPage }
+    matchFragments(Text) { room -> Route.Join(room)}
+    matchFragments(Text, UUID) { room, uuid -> Route.Room(room, uuid) }
 }
+
+val LocalRouter = staticCompositionLocalOf{ Router(createBrowserHistory(), routing) }
 
 fun main() {
-    val repository = LocalStorageRepository<Model>("POKER")
-
     renderComposable("root") {
-        //PokerApp(viewModel)
-        /*val (mode, setMode) = remember { mutableStateOf(Mode.Lobby) }
-        val state = storage.state
+        val router = LocalRouter.current
+        val model = remember { AppViewModel(router) }
 
-        when (mode) {
-            Mode.Lobby -> Lobby(peoplePresent = state.participants.size, onParticipantCreated = { name ->
-                setMode(Mode.Poker)
-                storage.updateState(state.addParticipant(name))
-            })
-            Mode.Poker -> Poker(state, onUpdateState = { newState ->
-                storage.updateState(newState) })
-        }*/
-    }
-}
-
-/*@Composable fun Lobby(peoplePresent: Int, onParticipantCreated: (participantName: String) -> Unit) {
-    val (name, setName) = remember { mutableStateOf("") }
-
-    H1 {
-        Text("Enter your name")
-    }
-    H2 {
-        Text("People present: $peoplePresent")
-    }
-    Input(InputType.Text) {
-        onKeyUp { event -> setName((event.target as HTMLInputElement).value) }
-    }
-
-    Button(attrs = {
-        if (name.isBlank()) disabled()
-
-        onClick { onParticipantCreated(name) }
-    }) {
-        Text("Enter")
-    }
-}
-
-@Composable fun Poker(state: PokerState, onUpdateState: (PokerState) -> Unit) {
-    H1 {
-        Text(state.name.value)
-    }
-
-    Ol {
-        state.participants.elements.forEach { participant ->
-            Li {
-                Text(participant.name.value)
+        LaunchedEffect(window) {
+            window.onbeforeunload = {
+                model.leave()
+                null
             }
         }
+
+        when (val currentRoute = router.activeRoute) {
+            is Route.LandingPage -> LandingPage(onEnterRoom = { roomName -> model.enterRoom(roomName) })
+            is Route.Join -> JoinPage(
+                roomName = currentRoute.room,
+                activeParticipants = model.roomViewModel?.participants?.size ?: 0,
+                onEnterName = { name -> model.enterName(name) }
+            )
+            is Route.Room -> Roompage()
+            else -> ErrorPage(router.activeLocation.pathname)
+        }
     }
-}*/
+}

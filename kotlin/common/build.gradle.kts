@@ -1,3 +1,5 @@
+import org.jetbrains.compose.compose
+
 plugins {
     kotlin("multiplatform")
     kotlin("plugin.serialization")
@@ -8,6 +10,7 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
+    google()
 }
 
 kotlin {
@@ -21,6 +24,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(Dependencies.KotlinXSerializationCore)
+                implementation(compose.runtime)
             }
         }
         val commonTest by getting {

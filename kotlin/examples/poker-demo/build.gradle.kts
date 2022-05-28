@@ -19,7 +19,11 @@ kotlin {
     jvm()
 
     js("web", IR) {
-        browser()
+        browser {
+            commonWebpackConfig {
+
+            }
+        }
         binaries.executable()
     }
 
@@ -41,6 +45,7 @@ kotlin {
         val webMain by getting {
             dependencies {
                 implementation(compose.web.core)
+                implementation(npm(Dependencies.NpmHistory, Versions.NpmHistory))
             }
         }
     }

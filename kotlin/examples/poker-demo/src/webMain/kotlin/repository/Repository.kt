@@ -1,3 +1,5 @@
+package repository
+
 import kotlinx.browser.window
 import kotlinx.serialization.*
 import kotlinx.serialization.json.Json

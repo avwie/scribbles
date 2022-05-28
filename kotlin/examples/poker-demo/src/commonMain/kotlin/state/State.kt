@@ -1,12 +1,14 @@
-package model
+package state
 
 import common.UUID
+import kotlinx.serialization.SerialName
 import nl.avwie.crdt.convergent.*
 
-data class Model(
-    private val _name: MergeableValue<String>,
+@kotlinx.serialization.Serializable
+data class State(
+    @SerialName("name") private val _name: MergeableValue<String>,
     val participants: MergeableMap<UUID, Participant>
-): Mergeable<Model> {
+): Mergeable<State> {
     val name by _name
 
     constructor(name: String): this(mergeableValueOf(name), mergeableMapOf())
@@ -26,16 +28,17 @@ data class Model(
         participants = participants.remove(uuid)
     )
 
-    override fun merge(other: Model): Model = copy(
+    override fun merge(other: State): State = copy(
         _name = _name.merge(other._name),
         participants = participants.merge(other.participants)
     )
 }
 
+@kotlinx.serialization.Serializable
 data class Participant(
     val uuid: UUID,
-    private val _name: MergeableValue<String>,
-    private val _score: MergeableValue<Int?>
+    @SerialName("name") private val _name: MergeableValue<String>,
+    @SerialName("score") private val _score: MergeableValue<Int?>
 ): Mergeable<Participant> {
     val name by _name
     val score by _score

@@ -1,0 +1,1 @@
+config.devServer["historyApiFallback"] = true
