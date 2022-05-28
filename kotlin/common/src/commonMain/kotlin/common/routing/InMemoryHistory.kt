@@ -5,33 +5,36 @@ import androidx.compose.runtime.mutableStateOf
 
 class InMemoryHistory(initialLocation: Location) : History {
 
-    private var locations = mutableListOf(initialLocation)
-    private var index = 0
+    private val back = ArrayDeque<Location>()
+    private val forward = ArrayDeque<Location>()
 
-    private var _activeLocation = mutableStateOf(locations[index])
+    private val _activeLocation = mutableStateOf(initialLocation)
     override val activeLocation: State<Location> = _activeLocation
 
+    init {
+        back.addLast(initialLocation)
+    }
+
     override fun push(location: Location) {
-        locations = locations.subList(0, index + 1)
-        locations.add(++index, location)
-        updateState()
+        forward.clear()
+        back.addLast(activeLocation.value)
+        _activeLocation.value = location
     }
 
     override fun forward() {
-        if (index < locations.size - 1) {
-            index += 1
-            updateState()
+        forward.removeFirstOrNull()?.let {
+            back.addLast(activeLocation.value)
+            _activeLocation.value = it
         }
     }
 
     override fun back() {
-        if (index > 0) {
-            index -= 1
-            updateState()
+        back.removeLastOrNull()?.let {
+            forward.addFirst(activeLocation.value)
+            _activeLocation.value = it
         }
     }
 
-    private fun updateState() {
-        _activeLocation.value = locations[index]
-    }
+    override fun peekForward(): Location? = forward.firstOrNull()
+    override fun peekBack(): Location? = back.lastOrNull()
 }

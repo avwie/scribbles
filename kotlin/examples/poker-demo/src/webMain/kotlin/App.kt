@@ -1,7 +1,7 @@
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
-import externals.history.createBrowserHistory
+import common.routing.BrowserHistory
 import kotlinx.browser.window
 import org.jetbrains.compose.web.renderComposable
 import router.Route
@@ -21,7 +21,9 @@ val routing = createRouting<Route>(Route.Error) {
     matchFragments(Text, UUID) { room, uuid -> Route.Room(room, uuid) }
 }
 
-val LocalRouter = staticCompositionLocalOf{ Router(createBrowserHistory(), routing) }
+val history = BrowserHistory()
+
+val LocalRouter = staticCompositionLocalOf{ Router(history, routing) }
 
 fun main() {
     renderComposable("root") {
@@ -43,7 +45,7 @@ fun main() {
                 onEnterName = { name -> model.enterName(name) }
             )
             is Route.Room -> Roompage()
-            else -> ErrorPage(router.activeLocation.pathname)
+            else -> ErrorPage(router.history.activeLocation.value.pathName)
         }
     }
 }

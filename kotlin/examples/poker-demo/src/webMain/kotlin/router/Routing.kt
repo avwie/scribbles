@@ -1,7 +1,6 @@
 package router
 
-import externals.history.Location
-import externals.history.Pathname
+import common.routing.Location
 import router.fragment.Fragment
 
 interface Routing<R> {
@@ -18,9 +17,9 @@ class RoutingBuilder<R>(
 
     private val rules = mutableListOf<Rule<R>>()
 
-    fun matchPathName(pathname: Pathname, builder: (location: Location) -> R) {
+    fun matchPathName(pathname: String, builder: (location: Location) -> R) {
         val rule = Rule { location ->
-            when (location.pathname) {
+            when (location.pathName) {
                 pathname -> builder(location)
                 else -> null
             }
@@ -31,7 +30,7 @@ class RoutingBuilder<R>(
     fun matchRegex(pattern: String, builder: (groups: List<String>) -> R) {
         val regex = Regex(pattern)
         val rule = Rule { location ->
-            val result = regex.matchEntire(location.pathname) ?: return@Rule null
+            val result = regex.matchEntire(location.pathName) ?: return@Rule null
             builder(result.groupValues.drop(1))
         }
         rules.add(rule)
@@ -80,7 +79,7 @@ class RoutingBuilder<R>(
     private fun innerMatchFragments(vararg fragments: Fragment<*>, builder: (List<String>) -> R) {
         val regex = Regex("/" + fragments.joinToString("/") { it.regexPattern })
         val rule = Rule { location ->
-            val result = regex.matchEntire(location.pathname) ?: return@Rule null
+            val result = regex.matchEntire(location.pathName) ?: return@Rule null
             val parts = result.groupValues.drop(1)
             builder(parts)
         }

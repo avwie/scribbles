@@ -2,6 +2,7 @@ package ui
 
 import LocalRouter
 import androidx.compose.runtime.Composable
+import common.routing.Location
 import org.jetbrains.compose.web.dom.A
 import org.jetbrains.compose.web.dom.AttrBuilderContext
 import org.jetbrains.compose.web.dom.ContentBuilder
@@ -19,7 +20,7 @@ import router.Route
         attrs?.invoke(this)
         onClick { event ->
             event.preventDefault()
-            history.push((event.target as HTMLAnchorElement).href)
+            history.push(Location.parse((event.target as HTMLAnchorElement).href))
         }
     }) {
         content?.invoke(this)

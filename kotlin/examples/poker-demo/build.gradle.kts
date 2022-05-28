@@ -45,7 +45,6 @@ kotlin {
         val webMain by getting {
             dependencies {
                 implementation(compose.web.core)
-                implementation(npm(Dependencies.NpmHistory, Versions.NpmHistory))
             }
         }
     }

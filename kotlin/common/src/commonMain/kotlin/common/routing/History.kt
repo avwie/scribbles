@@ -1,6 +1,8 @@
 package common.routing
 
 import androidx.compose.runtime.State
+import common.UUID
+import common.uuid
 
 interface History {
     val activeLocation: State<Location>
@@ -8,12 +10,16 @@ interface History {
     fun push(location: Location)
     fun forward()
     fun back()
+
+    fun peekForward(): Location?
+    fun peekBack(): Location?
 }
 
 data class Location(
     val pathName: String,
     val query: String? = null,
-    val hash: String? = null
+    val hash: String? = null,
+    val id: UUID = uuid()
 ) {
     fun toURL(): String {
         val builder = StringBuilder()

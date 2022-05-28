@@ -3,6 +3,7 @@ package view
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import common.routing.Location
 import repository.LocalStorageRepository
 import router.Route
 import router.Router
@@ -20,13 +21,13 @@ class AppViewModel(val router: Router<Route>) {
 
     fun enterRoom(roomName: String) {
         roomViewModel = RoomViewModel(roomName)
-        router.history.push(Route.Join(roomName).href)
+        router.history.push(Location.parse(Route.Join(roomName).href))
     }
 
     fun enterName(participantName: String) {
         roomViewModel?.also {
             it.setParticipant(participantName)
-            router.history.push(Route.Room(it.state.name, it.participant!!.uuid).href)
+            router.history.push(Location.parse(Route.Room(it.state.name, it.participant!!.uuid).href))
         }
 
     }
