@@ -21,7 +21,6 @@ data class Location(
     val pathName: String,
     val query: String? = null,
     val hash: String? = null,
-    val id: UUID = uuid()
 ) {
     fun toURL(): String {
         val builder = StringBuilder()

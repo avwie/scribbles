@@ -13,8 +13,8 @@ class BrowserHistory(
         window.onpopstate = { event ->
             when ((event.state as? String)?.let { uuid(it) }) {
                 null -> null
-                peekForward()?.id -> forward()
-                peekBack()?.id -> back()
+                memory.peekForwardEntry()?.id -> forward()
+                memory.peekBackEntry()?.id -> back()
                 else -> null
             }
         }
@@ -42,8 +42,8 @@ class BrowserHistory(
 
     private fun updateWindowHistory() {
         val state = (window.history.state as? String)?.let { uuid(it) }
-        if (state != activeLocation.value.id) {
-            window.history.pushState(activeLocation.value.id.toString(), "", activeLocation.value.toURL())
+        if (state != memory.activeEntry.value.id) {
+            window.history.pushState(memory.activeEntry.value.id.toString(), "", activeLocation.value.toURL())
         }
     }
 }

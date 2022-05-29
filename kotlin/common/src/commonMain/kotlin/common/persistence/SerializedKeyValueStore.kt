@@ -1,5 +1,11 @@
 package common.persistence
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
@@ -13,16 +19,27 @@ class SerializedKeyValueStore<T>(
     private val backend: KeyValueStore<String>,
     type: KType,
     private val serializerModule: SerializersModule,
+    val scope: CoroutineScope = CoroutineScope(Dispatchers.Unconfined)
 ): KeyValueStore<T> {
 
     private val jsonSerializer = Json {
         this.serializersModule = this@SerializedKeyValueStore.serializerModule
     }
 
+    override val updates: SharedFlow<KeyValueStore.Update<T>> = backend.updates
+        .map { update ->
+            KeyValueStore.Update(
+                update.key,
+                update.oldValue?.let(::deserialize),
+                deserialize(update.newValue)
+            )
+        }.shareIn(scope, started = SharingStarted.Eagerly)
+
+
     @Suppress("UNCHECKED_CAST")
     private val serializer: KSerializer<T> = serializerModule.serializer(type) as KSerializer<T>
 
-    override fun store(key: String, item: T) {
+    override suspend fun store(key: String, item: T) {
         backend.store(key, serialize(item))
     }
 
@@ -43,6 +60,7 @@ class SerializedKeyValueStore<T>(
         inline operator fun <reified T> invoke(
             backend: KeyValueStore<String>,
             serializerModule: SerializersModule = EmptySerializersModule,
-        ): SerializedKeyValueStore<T> = SerializedKeyValueStore(backend, typeOf<T>(), serializerModule)
+            scope: CoroutineScope = CoroutineScope(Dispatchers.Unconfined)
+        ): SerializedKeyValueStore<T> = SerializedKeyValueStore(backend, typeOf<T>(), serializerModule, scope)
     }
 }
