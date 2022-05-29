@@ -6,7 +6,7 @@ import androidx.compose.runtime.setValue
 import common.routing.Location
 import repository.LocalStorageRepository
 import router.Route
-import router.Router
+import common.routing.Router
 import state.Participant
 import state.State
 

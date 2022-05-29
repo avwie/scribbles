@@ -23,13 +23,15 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
+                implementation(Dependencies.KotlinXCoroutinesCore)
                 implementation(Dependencies.KotlinXSerializationCore)
-                implementation(compose.runtime)
+                implementation(Dependencies.KotlinXSerializationJson)
             }
         }
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
+                implementation(Dependencies.KotlinXCoroutinesTest)
             }
         }
 

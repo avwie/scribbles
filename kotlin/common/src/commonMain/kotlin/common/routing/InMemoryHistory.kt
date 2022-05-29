@@ -1,15 +1,20 @@
 package common.routing
 
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
+import kotlinx.coroutines.flow.*
 
 class InMemoryHistory(initialLocation: Location) : History {
+
+    constructor(
+        initialPathName: String,
+        initialQuery: String? = null,
+        initialHash: String? = null
+    ): this(Location(initialPathName, initialQuery, initialHash))
 
     private val back = ArrayDeque<Location>()
     private val forward = ArrayDeque<Location>()
 
-    private val _activeLocation = mutableStateOf(initialLocation)
-    override val activeLocation: State<Location> = _activeLocation
+    private val _activeLocation = MutableStateFlow(initialLocation)
+    override val activeLocation: StateFlow<Location> = _activeLocation.asStateFlow()
 
     init {
         back.addLast(initialLocation)
@@ -17,21 +22,21 @@ class InMemoryHistory(initialLocation: Location) : History {
 
     override fun push(location: Location) {
         forward.clear()
-        back.addLast(activeLocation.value)
-        _activeLocation.value = location
+        back.addLast(_activeLocation.value)
+        _activeLocation.update { location }
     }
 
     override fun forward() {
         forward.removeFirstOrNull()?.let {
-            back.addLast(activeLocation.value)
-            _activeLocation.value = it
+            back.addLast(_activeLocation.value)
+            _activeLocation.update { it }
         }
     }
 
     override fun back() {
         back.removeLastOrNull()?.let {
-            forward.addFirst(activeLocation.value)
-            _activeLocation.value = it
+            forward.addFirst(_activeLocation.value)
+            _activeLocation.update { it }
         }
     }
 

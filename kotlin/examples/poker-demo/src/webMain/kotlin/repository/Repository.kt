@@ -50,7 +50,6 @@ class LocalStorageRepository<T>(
     }
 
     private fun serialize(input: T): String {
-        jsonSerializer.encodeToString("")
         return jsonSerializer.encodeToString(serializer, input)
     }
 

@@ -1,4 +1,4 @@
-package router.fragment
+package common.routing
 
 import common.UUID
 import common.uuid
@@ -8,12 +8,7 @@ interface Fragment<T> {
     fun parse(str: String): T
 }
 
-inline fun <T> fragment(pattern: String, crossinline parse: (String) -> T) = object : Fragment<T> {
-    override val regexPattern: String = pattern
-    override fun parse(str: String): T = parse(str)
-}
-
-object UUID : Fragment<common.UUID> {
+object UUID : Fragment<UUID> {
     override val regexPattern: String = "([0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12})"
     override fun parse(str: String): UUID = uuid(str)
 }

@@ -5,10 +5,10 @@ import common.routing.BrowserHistory
 import kotlinx.browser.window
 import org.jetbrains.compose.web.renderComposable
 import router.Route
-import router.Router
-import router.createRouting
-import router.fragment.Text
-import router.fragment.UUID
+import common.routing.Router
+import common.routing.createRouting
+import common.routing.Text
+import common.routing.UUID
 import ui.ErrorPage
 import ui.JoinPage
 import ui.LandingPage

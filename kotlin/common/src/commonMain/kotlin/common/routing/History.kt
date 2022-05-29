@@ -1,11 +1,11 @@
 package common.routing
 
-import androidx.compose.runtime.State
 import common.UUID
 import common.uuid
+import kotlinx.coroutines.flow.StateFlow
 
 interface History {
-    val activeLocation: State<Location>
+    val activeLocation: StateFlow<Location>
 
     fun push(location: Location)
     fun forward()
@@ -14,6 +14,8 @@ interface History {
     fun peekForward(): Location?
     fun peekBack(): Location?
 }
+
+fun History.push(pathName: String, query: String? = null, hash: String? = null) = push(Location(pathName, query, hash))
 
 data class Location(
     val pathName: String,

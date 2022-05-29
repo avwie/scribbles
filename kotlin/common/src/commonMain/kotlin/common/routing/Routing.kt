@@ -1,11 +1,10 @@
-package router
-
-import common.routing.Location
-import router.fragment.Fragment
+package common.routing
 
 interface Routing<R> {
     fun getRoute(location: Location): R
 }
+
+fun <R> Routing<R>.getRoute(pathName: String, query: String? = null, hash: String? = null) = getRoute(Location(pathName, query, hash))
 
 class RoutingBuilder<R>(
     private val errorRoute: R
