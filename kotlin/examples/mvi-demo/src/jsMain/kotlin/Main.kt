@@ -1,13 +1,8 @@
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.rememberCoroutineScope
 import common.mvi.ActionReducer
 import common.mvi.EffectHandler
 import common.mvi.Store
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.web.attributes.ButtonType
 import org.jetbrains.compose.web.attributes.type
 import org.jetbrains.compose.web.dom.Button
@@ -23,11 +18,11 @@ val actionReducer = ActionReducer<Int, Action> { state, action ->
     }
 }
 
-val effectHandler = EffectHandler<Int, Action, Effect> { state, effect, actionDispatcher, effectDispatcher ->
+val effectHandler = EffectHandler<Int, Action, Effect> { state, effect, dispatcher ->
     when (effect) {
         is Effect.DelayedReset -> {
             delay(effect.ms)
-            actionDispatcher.dispatchAction(Action.Set(0))
+            dispatcher.dispatchAction(Action.Set(0))
         }
     }
 }
@@ -37,8 +32,6 @@ fun main() {
 
     renderComposable("root") {
         val count = store.state.collectAsState()
-        val scope = rememberCoroutineScope()
-
         Div(attrs = {
             classes("d-flex", "justify-content-center", "align-items-center", "vw-100", "vh-100")
         }) {

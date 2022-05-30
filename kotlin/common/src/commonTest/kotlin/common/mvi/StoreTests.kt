@@ -18,11 +18,11 @@ class StoreTests {
         }
     }
 
-    private val effectHandler = EffectHandler<String, String, String> { state, effect, actionDispatcher, effectDispatcher ->
+    private val effectHandler = EffectHandler<String, String, String> { _, effect, dispatcher ->
         when (effect) {
             "delayed_reverse" -> {
                 delay(2_000)
-                actionDispatcher.dispatchAction("reverse")
+                dispatcher.dispatchAction("reverse")
             }
             else -> {}
         }

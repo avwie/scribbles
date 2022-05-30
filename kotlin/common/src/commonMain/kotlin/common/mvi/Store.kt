@@ -11,7 +11,7 @@ class Store<S, A, E>(
     private val actionReducer: ActionReducer<S, A>,
     private val effectHandler: EffectHandler<S, A, E>,
     override val coroutineContext: CoroutineContext = Dispatchers.Unconfined
-) : ActionDispatcher<A>, EffectDispatcher<E> {
+) : Dispatcher<A, E> {
 
     private val _state = MutableStateFlow(initialState)
     val state = _state.asStateFlow()
@@ -22,7 +22,7 @@ class Store<S, A, E>(
 
     override fun dispatchEffect(effect: E) {
         launch {
-            effectHandler.reduceEffect(state, effect, this@Store, this@Store)
+            effectHandler.reduceEffect(state, effect, this@Store)
         }
     }
 }
