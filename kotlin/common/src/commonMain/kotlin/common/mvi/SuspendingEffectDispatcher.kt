@@ -1,9 +1,9 @@
 package common.mvi
 
-interface BlockingEffectDispatcher<E> {
+interface EffectDispatcher<E> {
     fun dispatchEffect(effect: E)
 }
 
-interface EffectDispatcher<E> {
+interface SuspendingEffectDispatcher<E> {
     suspend fun dispatchEffect(effect: E)
 }

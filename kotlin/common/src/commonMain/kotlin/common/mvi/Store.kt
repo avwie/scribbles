@@ -8,7 +8,7 @@ class Store<S, A, E>(
     initialState: S,
     private val actionReducer: ActionReducer<S, A>,
     private val effectHandler: EffectHandler<S, A, E>,
-) : Dispatcher<A, E> {
+) : SuspendingDispatcher<A, E> {
 
     private val _state = MutableStateFlow(initialState)
     val state = _state.asStateFlow()

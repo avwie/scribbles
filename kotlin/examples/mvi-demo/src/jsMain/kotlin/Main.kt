@@ -1,16 +1,12 @@
 import androidx.compose.runtime.*
 import common.mvi.*
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.web.attributes.ButtonType
 import org.jetbrains.compose.web.attributes.type
 import org.jetbrains.compose.web.dom.Button
 import org.jetbrains.compose.web.dom.Div
 import org.jetbrains.compose.web.dom.Text
 import org.jetbrains.compose.web.renderComposable
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
 
 val actionReducer = ActionReducer<Int, Action> { state, action ->
     when (action) {
@@ -33,7 +29,7 @@ val store = Store(0, actionReducer, effectHandler)
 
 fun main() {
     renderComposable("root") {
-        CompositionLocalProvider(LocalDispatcher provides store) {
+        CompositionLocalProvider(LocalSuspendingDispatcher provides store) {
             val dispatch = rememberDispatcher()
             val count by store.state.collectAsState()
 

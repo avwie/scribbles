@@ -1,11 +1,10 @@
 import androidx.compose.runtime.*
-import common.mvi.Dispatcher
+import common.mvi.SuspendingDispatcher
 import common.mvi.ScopedDispatcher
-import common.mvi.Store
 import kotlinx.coroutines.Dispatchers
 import kotlin.coroutines.CoroutineContext
 
-val LocalDispatcher = compositionLocalOf<Dispatcher<Action, Effect>> {
+val LocalSuspendingDispatcher = compositionLocalOf<SuspendingDispatcher<Action, Effect>> {
     error("Dispatcher not set")
 }
 
@@ -13,6 +12,6 @@ val LocalDispatcher = compositionLocalOf<Dispatcher<Action, Effect>> {
     getContext: @DisallowComposableCalls () -> CoroutineContext = { Dispatchers.Main }
 ): ScopedDispatcher<Action, Effect> {
     val scope = rememberCoroutineScope(getContext)
-    val dispatcher = LocalDispatcher.current
+    val dispatcher = LocalSuspendingDispatcher.current
     return ScopedDispatcher(dispatcher, scope.coroutineContext)
 }

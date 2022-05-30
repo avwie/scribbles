@@ -6,6 +6,6 @@ fun interface EffectHandler<S, A, E> {
     suspend fun handleEffect(
         state: StateFlow<S>,
         effect: E,
-        dispatcher: Dispatcher<A, E>
+        suspendingDispatcher: SuspendingDispatcher<A, E>
     )
 }
