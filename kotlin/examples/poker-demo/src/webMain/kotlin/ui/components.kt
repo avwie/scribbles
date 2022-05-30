@@ -1,6 +1,6 @@
 package ui
 
-import LocalRouter
+import LocalHistory
 import androidx.compose.runtime.Composable
 import common.routing.Location
 import org.jetbrains.compose.web.dom.A
@@ -15,7 +15,7 @@ import router.Route
     attrs: AttrBuilderContext<HTMLAnchorElement>? = null,
     content: ContentBuilder<HTMLAnchorElement>? = null
 ) {
-    val history =  LocalRouter.current.history
+    val history =  LocalHistory.current
     A(href = route?.href ?: href, attrs = {
         attrs?.invoke(this)
         onClick { event ->

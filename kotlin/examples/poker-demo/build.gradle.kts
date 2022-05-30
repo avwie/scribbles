@@ -31,6 +31,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(Dependencies.KotlinXSerializationJson)
+                implementation(Dependencies.KotlinXCoroutinesCore)
                 implementation(project(":common"))
                 implementation(project(":crdt"))
                 implementation(compose.runtime)

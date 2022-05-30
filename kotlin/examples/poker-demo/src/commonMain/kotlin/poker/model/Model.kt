@@ -1,14 +1,14 @@
-package state
+package poker.model
 
 import common.UUID
 import kotlinx.serialization.SerialName
 import nl.avwie.crdt.convergent.*
 
 @kotlinx.serialization.Serializable
-data class State(
+data class RoomModel(
     @SerialName("name") private val _name: MergeableValue<String>,
     val participants: MergeableMap<UUID, Participant>
-): Mergeable<State> {
+): Mergeable<RoomModel> {
     val name by _name
 
     constructor(name: String): this(mergeableValueOf(name), mergeableMapOf())
@@ -21,14 +21,14 @@ data class State(
 
     fun updateParticipant(uuid: UUID, block: Participant.() -> Participant) = when {
         participants.contains(uuid) -> putParticipant(block(participants[uuid]!!))
-        else -> throw IllegalArgumentException("Participant with UUID $uuid does not exist")
+        else -> throw IllegalArgumentException("poker.model.Participant with UUID $uuid does not exist")
     }
 
     fun removeParticipant(uuid: UUID) = copy(
         participants = participants.remove(uuid)
     )
 
-    override fun merge(other: State): State = copy(
+    override fun merge(other: RoomModel): RoomModel = copy(
         _name = _name.merge(other._name),
         participants = participants.merge(other.participants)
     )
