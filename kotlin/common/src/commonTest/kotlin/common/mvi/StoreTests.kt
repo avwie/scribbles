@@ -1,6 +1,7 @@
 package common.mvi
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -8,7 +9,7 @@ import kotlin.test.assertEquals
 @OptIn(ExperimentalCoroutinesApi::class)
 class StoreTests {
 
-    val actionReducer = ActionReducer<String, String> { state, action ->
+    private val actionReducer = ActionReducer<String, String> { state, action ->
         when (action) {
             "uppercase" -> state.uppercase()
             "lowercase" -> state.lowercase()
@@ -17,19 +18,19 @@ class StoreTests {
         }
     }
 
-    val effectReducer = EffectReducer<String, String, String> { state, effect ->
+    private val effectHandler = EffectHandler<String, String, String> { state, effect, actionDispatcher, effectDispatcher ->
         when (effect) {
             "delayed_reverse" -> {
                 delay(2_000)
-                EffectReducer.Result("reverse", listOf())
+                actionDispatcher.dispatchAction("reverse")
             }
-            else -> EffectReducer.Result("none", listOf())
+            else -> {}
         }
     }
 
     @Test
     fun simple() = runTest {
-        val store = Store("foo", actionReducer, effectReducer, scope = this)
+        val store = Store("foo", actionReducer, effectHandler, coroutineContext = coroutineContext)
         assertEquals("foo", store.state.value)
 
         store.dispatchAction("uppercase")
@@ -38,7 +39,8 @@ class StoreTests {
         store.dispatchAction("lowercase")
         assertEquals("foo", store.state.value)
 
-        store.dispatchEffect("delayed_reverse").join()
+        store.dispatchEffect("delayed_reverse")
+        advanceUntilIdle()
         assertEquals("oof", store.state.value)
     }
 }

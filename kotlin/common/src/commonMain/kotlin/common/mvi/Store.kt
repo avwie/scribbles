@@ -4,12 +4,13 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlin.coroutines.CoroutineContext
 
 class Store<S, A, E>(
     initialState: S,
     private val actionReducer: ActionReducer<S, A>,
-    private val effectReducer: EffectReducer<S, A, E>,
-    override val scope: CoroutineScope = CoroutineScope(Dispatchers.Unconfined)
+    private val effectHandler: EffectHandler<S, A, E>,
+    override val coroutineContext: CoroutineContext = Dispatchers.Unconfined
 ) : ActionDispatcher<A>, EffectDispatcher<E> {
 
     private val _state = MutableStateFlow(initialState)
@@ -19,11 +20,9 @@ class Store<S, A, E>(
         _state.update { state -> actionReducer.handleAction(state, action) }
     }
 
-    override fun dispatchEffect(effect: E): Job {
-        return scope.launch {
-            val result = effectReducer.reduceEffect(state, effect)
-            dispatchAction(result.action)
-            result.effects.forEach { effect -> dispatchEffect(effect) }
+    override fun dispatchEffect(effect: E) {
+        launch {
+            effectHandler.reduceEffect(state, effect, this@Store, this@Store)
         }
     }
 }
