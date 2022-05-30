@@ -30,7 +30,7 @@ class StoreTests {
 
     @Test
     fun simple() = runTest {
-        val store = Store("foo", actionReducer, effectHandler, coroutineContext = coroutineContext)
+        val store = Store("foo", actionReducer, effectHandler)
         assertEquals("foo", store.state.value)
 
         store.dispatchAction("uppercase")
@@ -40,7 +40,6 @@ class StoreTests {
         assertEquals("foo", store.state.value)
 
         store.dispatchEffect("delayed_reverse")
-        advanceUntilIdle()
         assertEquals("oof", store.state.value)
     }
 }

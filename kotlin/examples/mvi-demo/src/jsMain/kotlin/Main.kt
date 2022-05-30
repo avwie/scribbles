@@ -1,14 +1,16 @@
-import androidx.compose.runtime.collectAsState
-import common.mvi.ActionReducer
-import common.mvi.EffectHandler
-import common.mvi.Store
+import androidx.compose.runtime.*
+import common.mvi.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.web.attributes.ButtonType
 import org.jetbrains.compose.web.attributes.type
 import org.jetbrains.compose.web.dom.Button
 import org.jetbrains.compose.web.dom.Div
 import org.jetbrains.compose.web.dom.Text
 import org.jetbrains.compose.web.renderComposable
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 val actionReducer = ActionReducer<Int, Action> { state, action ->
     when (action) {
@@ -27,49 +29,53 @@ val effectHandler = EffectHandler<Int, Action, Effect> { state, effect, dispatch
     }
 }
 
+val store = Store(0, actionReducer, effectHandler)
+
 fun main() {
-    val store = Store(0, actionReducer, effectHandler)
-
     renderComposable("root") {
-        val count = store.state.collectAsState()
-        Div(attrs = {
-            classes("d-flex", "justify-content-center", "align-items-center", "vw-100", "vh-100")
-        }) {
-            Div {
-                Div(attrs = { classes("card", "m-2") }) {
-                    Div(attrs = { classes("card-body") }) {
-                        Text(count.value.toString())
-                    }
-                }
+        CompositionLocalProvider(LocalDispatcher provides store) {
+            val dispatch = rememberDispatcher()
+            val count by store.state.collectAsState()
 
-                Button(attrs = {
-                    type(ButtonType.Button)
-                    classes("btn", "btn-primary", "m-2")
-                    onClick {
-                        store.dispatchAction(Action.Increase)
+            Div(attrs = {
+                classes("d-flex", "justify-content-center", "align-items-center", "vw-100", "vh-100")
+            }) {
+                Div {
+                    Div(attrs = { classes("card", "m-2") }) {
+                        Div(attrs = { classes("card-body") }) {
+                            Text(count.toString())
+                        }
                     }
-                }) {
-                    Text("Increase")
-                }
 
-                Button(attrs = {
-                    type(ButtonType.Button)
-                    classes("btn", "btn-danger", "m-2")
-                    onClick {
-                        store.dispatchEffect(Effect.DelayedReset(count.value * 1000L))
+                    Button(attrs = {
+                        type(ButtonType.Button)
+                        classes("btn", "btn-primary", "m-2")
+                        onClick {
+                            dispatch(Action.Increase)
+                        }
+                    }) {
+                        Text("Increase")
                     }
-                }) {
-                    Text("Reset after ${count.value} seconds")
-                }
 
-                Button(attrs = {
-                    type(ButtonType.Button)
-                    classes("btn", "btn-primary", "m-2")
-                    onClick {
-                        store.dispatchAction(Action.Decrease)
+                    Button(attrs = {
+                        type(ButtonType.Button)
+                        classes("btn", "btn-danger", "m-2")
+                        onClick {
+                            dispatch(Effect.DelayedReset(count * 1000L))
+                        }
+                    }) {
+                        Text("Reset after ${count} seconds")
                     }
-                }) {
-                    Text("Decrease")
+
+                    Button(attrs = {
+                        type(ButtonType.Button)
+                        classes("btn", "btn-primary", "m-2")
+                        onClick {
+                            dispatch(Action.Decrease)
+                        }
+                    }) {
+                        Text("Decrease")
+                    }
                 }
             }
         }

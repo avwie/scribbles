@@ -1,7 +1,9 @@
 package common.mvi
 
-import kotlinx.coroutines.CoroutineScope
-
-interface EffectDispatcher<E> : CoroutineScope {
+interface BlockingEffectDispatcher<E> {
     fun dispatchEffect(effect: E)
+}
+
+interface EffectDispatcher<E> {
+    suspend fun dispatchEffect(effect: E)
 }
