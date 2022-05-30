@@ -5,26 +5,35 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class StoreTests {
 
-    private val actionReducer = ActionReducer<String, String> { state, action ->
+    sealed interface Action {
+        object Uppercase : Action
+        object Lowercase: Action
+        object Reverse: Action
+    }
+
+    sealed interface Effect {
+        data class DelayedAction(val delay: Long, val action: Action) : Effect
+    }
+
+    private val actionReducer = ActionReducer<String, Action> { state, action ->
         when (action) {
-            "uppercase" -> state.uppercase()
-            "lowercase" -> state.lowercase()
-            "reverse" -> state.reversed()
-            else -> state
+            Action.Uppercase -> state.uppercase()
+            Action.Lowercase -> state.lowercase()
+            Action.Reverse -> state.reversed()
         }
     }
 
-    private val effectHandler = EffectHandler<String, String, String> { _, effect, dispatcher ->
+    private val effectHandler = EffectHandler<String, Action, Effect> { _, effect, dispatcher ->
         when (effect) {
-            "delayed_reverse" -> {
-                delay(2_000)
-                dispatcher.dispatchAction("reverse")
+            is Effect.DelayedAction -> {
+                delay(effect.delay)
+                dispatcher.dispatchAction(effect.action)
             }
-            else -> {}
         }
     }
 
@@ -33,13 +42,26 @@ class StoreTests {
         val store = Store("foo", actionReducer, effectHandler)
         assertEquals("foo", store.state.value)
 
-        store.dispatchAction("uppercase")
+        store.dispatchAction(Action.Uppercase)
         assertEquals("FOO", store.state.value)
 
-        store.dispatchAction("lowercase")
+        store.dispatchAction(Action.Lowercase)
         assertEquals("foo", store.state.value)
 
-        store.dispatchEffect("delayed_reverse")
+        store.dispatchEffect(Effect.DelayedAction(2000, Action.Reverse))
+        assertEquals("oof", store.state.value)
+    }
+
+    @Test
+    fun testLaunch() = runTest {
+        val store = Store("foo", actionReducer, effectHandler)
+
+        launch {
+            store.dispatchEffect(Effect.DelayedAction(2000, Action.Reverse))
+            assertEquals("oof", store.state.value)
+        }
+        assertNotEquals("oof", store.state.value)
+        advanceUntilIdle()
         assertEquals("oof", store.state.value)
     }
 }
