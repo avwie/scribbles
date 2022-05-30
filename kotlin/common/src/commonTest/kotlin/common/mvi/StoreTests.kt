@@ -20,7 +20,7 @@ class StoreTests {
     val effectReducer = EffectReducer<String, String, String> { state, effect ->
         when (effect) {
             "delayed_reverse" -> {
-                delay(1_000)
+                delay(2_000)
                 EffectReducer.Result("reverse", listOf())
             }
             else -> EffectReducer.Result("none", listOf())
@@ -29,7 +29,7 @@ class StoreTests {
 
     @Test
     fun simple() = runTest {
-        val store = Store("foo", actionReducer, effectReducer)
+        val store = Store("foo", actionReducer, effectReducer, scope = this)
         assertEquals("foo", store.state.value)
 
         store.dispatchAction("uppercase")
@@ -38,7 +38,7 @@ class StoreTests {
         store.dispatchAction("lowercase")
         assertEquals("foo", store.state.value)
 
-        store.dispatchEffect("delayed_reverse")
+        store.dispatchEffect("delayed_reverse").join()
         assertEquals("oof", store.state.value)
     }
 }

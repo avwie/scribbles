@@ -9,7 +9,9 @@ class Store<S, A, E>(
     initialState: S,
     private val actionReducer: ActionReducer<S, A>,
     private val effectReducer: EffectReducer<S, A, E>,
+    override val scope: CoroutineScope = CoroutineScope(Dispatchers.Unconfined)
 ) : ActionDispatcher<A>, EffectDispatcher<E> {
+
     private val _state = MutableStateFlow(initialState)
     val state = _state.asStateFlow()
 
@@ -17,13 +19,11 @@ class Store<S, A, E>(
         _state.update { state -> actionReducer.handleAction(state, action) }
     }
 
-    override suspend fun dispatchEffect(effect: E) {
-        coroutineScope {
-            launch {
-                val result = effectReducer.reduceEffect(state, effect)
-                dispatchAction(result.action)
-                result.effects.forEach { effect -> dispatchEffect(effect) }
-            }
+    override fun dispatchEffect(effect: E): Job {
+        return scope.launch {
+            val result = effectReducer.reduceEffect(state, effect)
+            dispatchAction(result.action)
+            result.effects.forEach { effect -> dispatchEffect(effect) }
         }
     }
 }
