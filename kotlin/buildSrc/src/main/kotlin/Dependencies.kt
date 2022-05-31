@@ -11,4 +11,7 @@ object Dependencies {
 
     val KotlinXDateTime = "org.jetbrains.kotlinx:kotlinx-datetime:${Versions.KotlinXDateTime}"
     val KotlinXImmutableCollections = "org.jetbrains.kotlinx:kotlinx-collections-immutable:${Versions.KotlinXImmutableCollections}"
+
+    val Ktor = "io.ktor:ktor-client-core:${Versions.Ktor}"
+    val KtorClientJs = "io.ktor:ktor-client-js:${Versions.Ktor}"
 }

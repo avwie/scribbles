@@ -17,9 +17,6 @@ repositories {
 kotlin {
     js(IR) {
         browser {
-            commonWebpackConfig {
-
-            }
         }
         binaries.executable()
     }
@@ -28,6 +25,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(Dependencies.KotlinXCoroutinesCore)
+                implementation(Dependencies.Ktor)
                 implementation(project(":common"))
                 implementation(compose.runtime)
             }
@@ -41,6 +39,7 @@ kotlin {
         val jsMain by getting {
             dependencies {
                 implementation(compose.web.core)
+                implementation(Dependencies.KtorClientJs)
             }
         }
     }

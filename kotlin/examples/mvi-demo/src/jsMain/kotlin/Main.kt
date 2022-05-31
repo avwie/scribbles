@@ -1,78 +1,121 @@
-import androidx.compose.runtime.*
-import common.mvi.*
-import kotlinx.coroutines.delay
-import org.jetbrains.compose.web.attributes.ButtonType
-import org.jetbrains.compose.web.attributes.type
-import org.jetbrains.compose.web.dom.Button
-import org.jetbrains.compose.web.dom.Div
-import org.jetbrains.compose.web.dom.Text
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
+import common.mvi.ActionReducer
+import common.mvi.EffectHandler
+import common.mvi.Store
+import io.ktor.client.*
+import io.ktor.client.request.*
+import io.ktor.utils.io.core.*
+import kotlinx.coroutines.launch
+import org.jetbrains.compose.web.attributes.disabled
+import org.jetbrains.compose.web.dom.*
 import org.jetbrains.compose.web.renderComposable
+import kotlin.random.Random
 
-val actionReducer = ActionReducer<Int, Action> { state, action ->
+data class State(
+    val comicCount: Int? = null,
+    val currentComic: Comic? = null
+)
+
+data class Comic(val id: Int, val title: String, val img: String, val alt: String)
+
+sealed interface Action {
+    data class SetComicCount(val count: Int) : Action
+    data class SetComic(val comic: Comic) : Action
+}
+
+sealed interface Effect {
+    object LoadLatestComic : Effect
+    data class LoadComic(val id: Int) : Effect
+}
+
+val actionReducer = ActionReducer<State, Action> { state, action ->
     when (action) {
-        Action.Increase -> state + 1
-        Action.Decrease -> state - 1
-        is Action.Set -> action.value
+        is Action.SetComicCount -> state.copy(comicCount = action.count)
+        is Action.SetComic -> state.copy(currentComic = action.comic)
     }
 }
 
-val effectHandler = EffectHandler<Int, Action, Effect> { state, effect, dispatcher ->
+val effectHandler = EffectHandler<State, Action, Effect> { state, effect, dispatcher ->
     when (effect) {
-        is Effect.DelayedReset -> {
-            delay(effect.ms)
-            dispatcher.dispatchAction(Action.Set(0))
+        Effect.LoadLatestComic -> {
+            val latestComic = makeXKCDRequest("latest")
+            dispatcher.dispatchAction(Action.SetComicCount(latestComic.id))
+            dispatcher.dispatchAction(Action.SetComic(latestComic))
+        }
+
+        is Effect.LoadComic -> {
+            val comic = makeXKCDRequest(effect.id.toString())
+            dispatcher.dispatchAction(Action.SetComic(comic))
         }
     }
 }
 
-val store = Store(0, actionReducer, effectHandler)
+suspend fun makeXKCDRequest(id: String): Comic = HttpClient().use { client ->
+    val response: String = client.get("https://xkcd.vercel.app/?comic=$id")
+    val json = JSON.parse<dynamic>(response)
+    Comic(id = json.num as Int, title = json.title as String, img = json.img as String, alt = json.alt as String)
+}
+
+val store = Store(State(), actionReducer, effectHandler)
 
 fun main() {
     renderComposable("root") {
-        CompositionLocalProvider(LocalSuspendingDispatcher provides store) {
-            val dispatch = rememberDispatcher()
-            val count by store.state.collectAsState()
+        val state by store.state.collectAsState()
+        val scope = rememberCoroutineScope()
 
-            Div(attrs = {
-                classes("d-flex", "justify-content-center", "align-items-center", "vw-100", "vh-100")
-            }) {
-                Div {
-                    Div(attrs = { classes("card", "m-2") }) {
-                        Div(attrs = { classes("card-body") }) {
-                            Text(count.toString())
-                        }
-                    }
+        LaunchedEffect(Unit) {
+            store.dispatchEffect(Effect.LoadLatestComic)
+        }
 
-                    Button(attrs = {
-                        type(ButtonType.Button)
-                        classes("btn", "btn-primary", "m-2")
-                        onClick {
-                            dispatch(Action.Increase)
-                        }
-                    }) {
-                        Text("Increase")
-                    }
+        if (state.currentComic == null) {
+            P {
+                Text("Loading ....")
+            }
+        } else {
+            val comic = state.currentComic!!
+            H1 {
+                Text(comic.title)
+            }
 
-                    Button(attrs = {
-                        type(ButtonType.Button)
-                        classes("btn", "btn-danger", "m-2")
-                        onClick {
-                            dispatch(Effect.DelayedReset(count * 1000L))
-                        }
-                    }) {
-                        Text("Reset after ${count} seconds")
-                    }
+            Img(src = comic.img)
 
-                    Button(attrs = {
-                        type(ButtonType.Button)
-                        classes("btn", "btn-primary", "m-2")
-                        onClick {
-                            dispatch(Action.Decrease)
-                        }
-                    }) {
-                        Text("Decrease")
+            P {
+                Text(comic.alt)
+            }
+
+            Button(attrs = {
+                if (comic.id <= 1) disabled()
+                onClick {
+                    scope.launch {
+                        store.dispatchEffect(Effect.LoadComic(comic.id - 1))
                     }
                 }
+            }) {
+                Text("Previous")
+            }
+
+            Button(attrs = {
+                onClick {
+                    scope.launch {
+                        store.dispatchEffect(Effect.LoadComic(Random.nextInt(1, state.comicCount!!)))
+                    }
+                }
+            }) {
+                Text("Random")
+            }
+
+            Button (attrs = {
+                if (comic.id == state.comicCount) disabled()
+                onClick {
+                    scope.launch {
+                        store.dispatchEffect(Effect.LoadComic(comic.id + 1))
+                    }
+                }
+            }) {
+                Text("Next")
             }
         }
     }

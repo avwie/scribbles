@@ -8,6 +8,8 @@ object Versions {
     const val KotlinXDateTime = "0.3.2"
     const val KotlinXImmutableCollections = "0.3.5"
 
+    const val Ktor = "1.6.8"
+
     const val NpmUUID = "8.3.2"
     const val NpmVirtualDom = "2.1.1"
     const val NpmHistory = "5.3.0"
