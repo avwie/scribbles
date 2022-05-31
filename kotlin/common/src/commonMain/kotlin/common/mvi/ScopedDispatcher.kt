@@ -22,7 +22,4 @@ class ScopedDispatcher<A, E>(
 
     @JvmName("invokeEffect")
     operator fun invoke(effect: E) = dispatchEffect(effect)
-
-    operator fun component1(): (A) -> Unit = { dispatchAction(it) }
-    operator fun component2(): (E) -> Unit = { dispatchEffect(it)}
 }
