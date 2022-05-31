@@ -3,9 +3,6 @@ import androidx.compose.runtime.DisallowComposableCalls
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.rememberCoroutineScope
 import common.mvi.*
-import io.ktor.client.*
-import io.ktor.client.request.*
-import io.ktor.utils.io.core.*
 import kotlinx.coroutines.Dispatchers
 import kotlin.coroutines.CoroutineContext
 
@@ -48,11 +45,7 @@ val effectHandler = EffectHandler<State, Action, Effect> { state, effect, dispat
     }
 }
 
-suspend fun makeXKCDRequest(id: String): Comic = HttpClient().use { client ->
-    val response: String = client.get("https://xkcd.vercel.app/?comic=$id")
-    val json = JSON.parse<dynamic>(response)
-    Comic(id = json.num as Int, title = json.title as String, img = json.img as String, alt = json.alt as String)
-}
+expect suspend fun makeXKCDRequest(id: String): Comic
 
 val store = Store(State(), actionReducer, effectHandler)
 
