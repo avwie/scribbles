@@ -16,10 +16,4 @@ class ScopedDispatcher<A, E>(
             suspendingDispatcher.dispatchEffect(effect)
         }
     }
-
-    @JvmName("invokeAction")
-    operator fun invoke(action: A) = dispatchAction(action)
-
-    @JvmName("invokeEffect")
-    operator fun invoke(effect: E) = dispatchEffect(effect)
 }

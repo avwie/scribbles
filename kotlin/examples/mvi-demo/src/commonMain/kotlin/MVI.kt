@@ -30,17 +30,17 @@ val actionReducer = ActionReducer<State, Action> { state, action ->
     }
 }
 
-val effectHandler = EffectHandler<State, Action, Effect> { state, effect, dispatcher ->
+val effectHandler = EffectHandler<State, Action, Effect> { state, effect, dispatch ->
     when (effect) {
         Effect.LoadLatestComic -> {
             val latestComic = makeXKCDRequest("latest")
-            dispatcher.dispatchAction(Action.SetComicCount(latestComic.id))
-            dispatcher.dispatchAction(Action.SetComic(latestComic))
+            dispatch(Action.SetComicCount(latestComic.id))
+            dispatch(Action.SetComic(latestComic))
         }
 
         is Effect.LoadComic -> {
             val comic = makeXKCDRequest(effect.id.toString())
-            dispatcher.dispatchAction(Action.SetComic(comic))
+            dispatch(Action.SetComic(comic))
         }
     }
 }
