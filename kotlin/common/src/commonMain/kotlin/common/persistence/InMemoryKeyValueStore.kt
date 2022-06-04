@@ -1,21 +1,20 @@
 package common.persistence
 
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
-
 class InMemoryKeyValueStore<T> : KeyValueStore<T> {
 
     private val items = mutableMapOf<String, T>()
 
-    private val _updates = MutableSharedFlow<KeyValueStore.Update<T>>()
-    override val updates: SharedFlow<KeyValueStore.Update<T>> = _updates.asSharedFlow()
-
-    override suspend fun store(key: String, item: T) {
-        val oldItem = retrieve(key)
-        items[key] = item
-        _updates.emit(KeyValueStore.Update(key, oldItem, item))
+    override suspend fun contains(key: String): Boolean {
+        return items.contains(key)
     }
 
-    override fun retrieve(key: String): T? = items[key]
+    override suspend fun set(key: String, item: T) {
+        items[key] = item
+    }
+
+    override suspend fun get(key: String): T? = items[key]
+
+    override suspend fun remove(key: String) {
+        items.remove(key)
+    }
 }

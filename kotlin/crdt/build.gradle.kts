@@ -25,6 +25,7 @@ kotlin {
                 implementation(Dependencies.KotlinXSerializationJson)
                 implementation(Dependencies.KotlinXDateTime)
                 implementation(Dependencies.KotlinXImmutableCollections)
+                implementation(Dependencies.KotlinXCoroutinesCore)
             }
         }
         val commonTest by getting {

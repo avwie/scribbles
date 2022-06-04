@@ -1,6 +1,5 @@
 package common.persistence
 
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -21,8 +20,8 @@ class InMemoryKeyValueStoreTests {
                 updates.add(it)
             }
         }
-        store.store("Foo", "Bar")
-        store.store("Foo", "Bat")
+        store.set("Foo", "Bar")
+        store.set("Foo", "Bat")
         job.cancel()
 
         assertEquals(2, updates.size)

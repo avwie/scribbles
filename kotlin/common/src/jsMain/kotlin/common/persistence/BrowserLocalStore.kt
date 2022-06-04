@@ -8,29 +8,23 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
-class BrowserLocalStore(
-    val scope: CoroutineScope = CoroutineScope(Dispatchers.Unconfined)
-) : KeyValueStore<String> {
+class BrowserLocalStore : KeyValueStore<String> {
     private val storage = window.localStorage
 
-    private val _updates = MutableSharedFlow<KeyValueStore.Update<String>>()
-    override val updates: SharedFlow<KeyValueStore.Update<String>> = _updates.asSharedFlow()
-
-    init {
-        window.onstorage = { event ->
-            scope.launch {
-                _updates.emit(KeyValueStore.Update(event.key!!, event.oldValue, event.newValue!!))
-            }
-        }
+    override suspend fun contains(key: String): Boolean {
+        return storage.getItem(key) != null
     }
 
-    override suspend fun store(key: String, item: String) {
-        val oldItem = retrieve(key)
+    override suspend fun set(key: String, item: String) {
         storage.setItem(key, item)
-        _updates.emit(KeyValueStore.Update(key, oldItem, item))
     }
 
-    override fun retrieve(key: String): String? {
+    override suspend fun get(key: String): String? {
         return storage.getItem(key)
+    }
+
+    override suspend fun remove(key: String) {
+        if (!contains(key)) return
+        storage.removeItem(key)
     }
 }

@@ -1,5 +1,7 @@
 package nl.avwie.crdt.convergent
 
+import common.crdt.convergent.MergeableMap
+import common.crdt.convergent.mergeableMapOf
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json

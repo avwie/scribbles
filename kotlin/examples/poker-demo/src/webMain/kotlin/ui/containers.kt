@@ -35,7 +35,7 @@ import org.w3c.dom.HTMLInputElement
     }
 }
 
-@Composable fun LandingPage(
+@Composable fun CreateOrJoinRoomPage(
     onEnterRoom: (roomName: String) -> Unit = {}
 ) {
     var roomName by remember { mutableStateOf("") }
@@ -66,7 +66,7 @@ import org.w3c.dom.HTMLInputElement
     }
 }
 
-@Composable fun JoinPage(
+@Composable fun ParticipantInfoPage(
     roomName: String,
     activeParticipants: Int,
     onEnterName: (participantName: String) -> Unit = {}

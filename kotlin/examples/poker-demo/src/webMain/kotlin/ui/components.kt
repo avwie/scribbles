@@ -1,6 +1,6 @@
 package ui
 
-import LocalHistory
+/*import LocalHistory
 import androidx.compose.runtime.Composable
 import common.routing.Location
 import org.jetbrains.compose.web.dom.A
@@ -25,4 +25,4 @@ import router.Route
     }) {
         content?.invoke(this)
     }
-}
+}*/
