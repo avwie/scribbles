@@ -1,35 +1,41 @@
 import androidx.compose.runtime.LaunchedEffect
-import common.messagebus.BrowserLocalStorageMessageBus
-import common.messagebus.SerializingMessageBus
+import androidx.compose.runtime.remember
+import nl.avwie.common.messagebus.BrowserLocalStorageMessageBus
+import nl.avwie.common.routing.BrowserHistory
 import kotlinx.browser.window
+import nl.avwie.common.messagebus.MessageBusFactory
+import nl.avwie.common.routing.Router
 import org.jetbrains.compose.web.renderComposable
-import poker.model.RoomModel
-import poker.viewmodel.ViewModel
-import poker.viewmodel.ViewState
-import ui.CreateOrJoinRoomPage
-import ui.ParticipantInfoPage
+import poker.routing.Routing
+import poker.viewmodel.*
+import ui.CreatePage
+import ui.ErrorPage
+import ui.FullPageCenter
+import ui.JoinPage
 
-val messageBus = BrowserLocalStorageMessageBus("poker")
-val viewModel = ViewModel(messageBus)
+val router = Router(BrowserHistory(), Routing)
+val messageBusFactory = MessageBusFactory {
+    BrowserLocalStorageMessageBus(topic = it)
+}
 
 fun main() {
     renderComposable("root") {
+        val appViewModel = remember { AppViewModel(router, messageBusFactory) }
 
         LaunchedEffect(Unit) {
             window.onbeforeunload = {
-                viewModel.leave()
+                appViewModel.leave()
                 null
             }
         }
 
-        when (viewModel.viewState) {
-            ViewState.CreateOrJoin -> CreateOrJoinRoomPage(onEnterRoom = viewModel::enterRoomName)
-            ViewState.ParticipantInfo -> ParticipantInfoPage(
-                roomName = viewModel.roomState.name,
-                activeParticipants = viewModel.participantCount,
-                onEnterName = viewModel::enterParticipantName
-            )
-            ViewState.Room -> {}
+        FullPageCenter {
+            when (val currentViewModel = appViewModel.activeViewModel) {
+                is ErrorViewModel -> ErrorPage(currentViewModel.title, currentViewModel.message)
+                is CreateViewModel -> CreatePage(currentViewModel)
+                is JoinViewModel -> JoinPage(currentViewModel)
+                is RoomViewModel -> {}
+            }
         }
     }
 }

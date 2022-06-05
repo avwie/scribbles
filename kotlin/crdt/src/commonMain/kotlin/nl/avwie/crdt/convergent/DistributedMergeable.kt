@@ -1,15 +1,14 @@
 package nl.avwie.crdt.convergent
 
-import common.UUID
-import common.messagebus.MessageBus
-import common.messagebus.SerializingMessageBus
-import common.uuid
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
+import nl.avwie.common.UUID
+import nl.avwie.common.messagebus.MessageBus
+import nl.avwie.common.messagebus.SerializingMessageBus
+import nl.avwie.common.uuid
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.reflect.KProperty
 
@@ -29,7 +28,7 @@ class DistributedMergeable<T>(
 
     init {
         messageBus.messages
-            //.filter { update -> update.originator != originator }
+            .filter { update -> update.originator != originator }
             .onEach { update ->
                 val merged = current.merge(update.state)
                 if (update.state != current) {
@@ -40,13 +39,17 @@ class DistributedMergeable<T>(
 
     fun set(state: T) {
         _states.value = state
-        scope.launch {
-            messageBus.send(StateUpdate(originator, _states.value))
-        }
+        publish()
     }
 
     fun update(updater: T.() -> T) {
         set(updater(current))
+    }
+
+    fun publish() {
+        scope.launch {
+            messageBus.send(StateUpdate(originator, _states.value))
+        }
     }
 
     operator fun getValue(thisRef: Any?, property: KProperty<*>): T = current
