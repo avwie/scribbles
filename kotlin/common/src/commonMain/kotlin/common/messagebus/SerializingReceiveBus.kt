@@ -14,6 +14,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.serializer
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
@@ -21,7 +22,7 @@ class SerializingReceiveBus<T>(
     private val backend: ReceiveBus<String>,
     type: KType,
     private val serializerModule: SerializersModule,
-    private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default)
+    private val scope: CoroutineScope
 ): ReceiveBus<T> {
 
     override val messages: SharedFlow<T> = backend.messages
@@ -44,7 +45,7 @@ class SerializingReceiveBus<T>(
         inline operator fun <reified T> invoke(
             backend: ReceiveBus<String>,
             serializerModule: SerializersModule = EmptySerializersModule,
-            scope: CoroutineScope = CoroutineScope(Dispatchers.Default)
+            scope: CoroutineScope = CoroutineScope(EmptyCoroutineContext)
         ): SerializingReceiveBus<T> = SerializingReceiveBus(backend, typeOf<T>(), serializerModule, scope)
     }
 }

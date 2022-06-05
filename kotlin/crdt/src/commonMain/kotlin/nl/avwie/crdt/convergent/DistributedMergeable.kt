@@ -10,13 +10,14 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.reflect.KProperty
 
 class DistributedMergeable<T>(
     initialState: T,
     private val messageBus: MessageBus<StateUpdate<T>>,
     private val originator: UUID = uuid(),
-    private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default)
+    private val scope: CoroutineScope
 ) where T : Mergeable<T> {
 
     @kotlinx.serialization.Serializable
@@ -28,9 +29,12 @@ class DistributedMergeable<T>(
 
     init {
         messageBus.messages
-            .filter { update -> update.originator != originator }
+            //.filter { update -> update.originator != originator }
             .onEach { update ->
-                _states.value = current.merge(update.state)
+                val merged = current.merge(update.state)
+                if (update.state != current) {
+                    set(merged)
+                }
             }.launchIn(scope)
     }
 
@@ -41,7 +45,7 @@ class DistributedMergeable<T>(
         }
     }
 
-    fun update(updater: (T) -> T) {
+    fun update(updater: T.() -> T) {
         set(updater(current))
     }
 
@@ -53,7 +57,7 @@ inline fun <reified T : Mergeable<T>> distributedMergeableOf(
     initialState: T,
     messageBus: MessageBus<String>,
     serializerModule: SerializersModule = EmptySerializersModule,
-    scope: CoroutineScope = CoroutineScope(Dispatchers.Default)
+    scope: CoroutineScope = CoroutineScope(EmptyCoroutineContext)
 ) : DistributedMergeable<T> {
     val serializingMessageBus = SerializingMessageBus<DistributedMergeable.StateUpdate<T>>(messageBus, serializerModule = serializerModule)
     return DistributedMergeable(initialState, serializingMessageBus, uuid(), scope)

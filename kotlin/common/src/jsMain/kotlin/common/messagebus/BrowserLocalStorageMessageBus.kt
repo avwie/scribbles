@@ -7,10 +7,11 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.launch
 import org.w3c.dom.set
+import kotlin.coroutines.EmptyCoroutineContext
 
 class BrowserLocalStorageMessageBus(
     val topic: String,
-    private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default)
+    private val scope: CoroutineScope = CoroutineScope(EmptyCoroutineContext)
 ) : MessageBus<String> {
 
     private val _messages = MutableSharedFlow<String>()
@@ -27,6 +28,7 @@ class BrowserLocalStorageMessageBus(
     }
 
     override suspend fun send(item: String) {
+        println(item)
         window.localStorage[topic] = item
         _messages.emit(item)
     }

@@ -1,7 +1,5 @@
 package nl.avwie.crdt.convergent
 
-import common.crdt.convergent.MergeableValue
-import common.crdt.convergent.mergeableValueOf
 import common.sleep
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
@@ -45,12 +43,12 @@ class MergeableValueTests {
         sleep(1)
         val c = mergeableValueOf(3)
 
-        assertEquals(3, common.crdt.convergent.merge(a, b, c).value)
-        assertEquals(3, common.crdt.convergent.merge(a, c, b).value)
-        assertEquals(3, common.crdt.convergent.merge(b, c, a).value)
-        assertEquals(3, common.crdt.convergent.merge(b, a, c).value)
-        assertEquals(3, common.crdt.convergent.merge(c, a, b).value)
-        assertEquals(3, common.crdt.convergent.merge(c, b, a).value)
+        assertEquals(3, merge(a, b, c).value)
+        assertEquals(3, merge(a, c, b).value)
+        assertEquals(3, merge(b, c, a).value)
+        assertEquals(3, merge(b, a, c).value)
+        assertEquals(3, merge(c, a, b).value)
+        assertEquals(3, merge(c, b, a).value)
     }
 
     @Test

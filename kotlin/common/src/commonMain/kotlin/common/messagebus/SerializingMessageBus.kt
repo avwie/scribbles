@@ -5,6 +5,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.reflect.typeOf
 
 class SerializingMessageBus<T>(
@@ -16,7 +17,7 @@ class SerializingMessageBus<T>(
         inline operator fun <reified T> invoke(
             backend: MessageBus<String>,
             serializerModule: SerializersModule = EmptySerializersModule,
-            scope: CoroutineScope = CoroutineScope(Dispatchers.Default)
+            scope: CoroutineScope = CoroutineScope(EmptyCoroutineContext)
         ): SerializingMessageBus<T> = SerializingMessageBus(
             SerializingSendBus(backend, typeOf<T>(), serializerModule),
             SerializingReceiveBus(backend, typeOf<T>(), serializerModule, scope)

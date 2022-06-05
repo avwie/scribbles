@@ -9,7 +9,7 @@ import poker.viewmodel.ViewState
 import ui.CreateOrJoinRoomPage
 import ui.ParticipantInfoPage
 
-val messageBus = SerializingMessageBus<RoomModel>(BrowserLocalStorageMessageBus("poker"))
+val messageBus = BrowserLocalStorageMessageBus("poker")
 val viewModel = ViewModel(messageBus)
 
 fun main() {
