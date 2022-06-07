@@ -4,10 +4,10 @@ import androidx.compose.runtime.*
 import org.jetbrains.compose.web.attributes.*
 import org.jetbrains.compose.web.dom.*
 import org.w3c.dom.HTMLInputElement
-import poker.viewmodel.JoinViewModel
+import poker.viewmodel.JoinPageViewModel
 
 @Composable
-fun JoinPage(viewModel: JoinViewModel) {
+fun JoinPage(viewModel: JoinPageViewModel) {
     var participantName by remember { mutableStateOf("") }
 
     Div {

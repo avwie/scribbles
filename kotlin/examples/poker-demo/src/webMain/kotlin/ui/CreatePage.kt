@@ -4,10 +4,10 @@ import androidx.compose.runtime.*
 import org.jetbrains.compose.web.attributes.*
 import org.jetbrains.compose.web.dom.*
 import org.w3c.dom.HTMLInputElement
-import poker.viewmodel.CreateViewModel
+import poker.viewmodel.CreatePageViewModel
 
 @Composable
-fun CreatePage(viewModel: CreateViewModel) {
+fun CreatePage(viewModel: CreatePageViewModel) {
     var roomName by remember { mutableStateOf("") }
 
     Div {

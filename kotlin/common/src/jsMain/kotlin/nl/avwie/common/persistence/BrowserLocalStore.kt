@@ -1,15 +1,9 @@
 package nl.avwie.common.persistence
 
 import kotlinx.browser.window
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.launch
+import org.w3c.dom.Storage
 
-class BrowserLocalStore : KeyValueStore<String> {
-    private val storage = window.localStorage
+class BrowserLocalStore(private val storage: Storage) : KeyValueStore<String> {
 
     override suspend fun contains(key: String): Boolean {
         return storage.getItem(key) != null
@@ -28,3 +22,6 @@ class BrowserLocalStore : KeyValueStore<String> {
         storage.removeItem(key)
     }
 }
+
+fun browserLocalStorage() = BrowserLocalStore(window.localStorage)
+fun browserSessionStorage() = BrowserLocalStore(window.sessionStorage)

@@ -17,7 +17,3 @@ import org.w3c.dom.HTMLInputElement
         contentBuilder()
     }
 }
-
-@Composable fun Roompage() {
-
-}
