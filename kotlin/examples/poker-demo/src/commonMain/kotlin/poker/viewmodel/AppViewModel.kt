@@ -63,7 +63,10 @@ class AppViewModel(
         }
     }
 
-    private suspend fun getOrCreateDistributedState(roomId: UUID, roomName: String): DistributedMergeable<RoomSharedState> {
+    private suspend fun getOrCreateDistributedState(
+        roomId: UUID,
+        roomName: String
+    ): DistributedMergeable<RoomSharedState> {
         val initialState = stateCache.get(roomId.toString()) ?: RoomSharedState(roomName)
         if (distributedState == null) {
             distributedState = distributedMergeableOf(
