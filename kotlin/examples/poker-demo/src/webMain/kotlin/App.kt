@@ -9,7 +9,7 @@ import nl.avwie.common.persistence.browserSessionStorage
 import nl.avwie.common.routing.Router
 import org.jetbrains.compose.web.renderComposable
 import poker.routing.Routing
-import poker.sharedstate.RoomSharedState
+import poker.sharedstate.RoomState
 import poker.viewmodel.*
 import ui.*
 
@@ -19,7 +19,7 @@ val messageBusFactory = MessageBusFactory {
     BrowserLocalStorageMessageBus(topic = it)
 }
 
-val stateCache = SerializingKeyValueStore<RoomSharedState>(browserSessionStorage())
+val stateCache = SerializingKeyValueStore<RoomState>(browserSessionStorage())
 
 fun main() {
     renderComposable("root") {

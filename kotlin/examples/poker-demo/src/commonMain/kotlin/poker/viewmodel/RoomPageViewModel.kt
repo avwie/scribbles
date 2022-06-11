@@ -1,76 +1,71 @@
 package poker.viewmodel
 
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import nl.avwie.common.UUID
 import nl.avwie.crdt.convergent.DistributedMergeable
-import poker.sharedstate.RoomSharedState
+import poker.sharedstate.DistributedMergeableState
+import poker.sharedstate.RoomState
 import poker.util.collectAsState
 import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 
-fun tickerFlow(period: Duration, initialDelay: Duration = Duration.ZERO) = flow {
-    delay(initialDelay)
-    while (true) {
-        emit(Unit)
-        delay(period)
-    }
-}
 
 class RoomPageViewModel(
+    roomState: DistributedMergeableState<RoomState>,
     private val participantId: UUID,
-    private val distributedState: DistributedMergeable<RoomSharedState>,
-    scope: CoroutineScope = CoroutineScope(EmptyCoroutineContext),
+    private val scope: CoroutineScope = CoroutineScope(EmptyCoroutineContext),
 ) : PageViewModel() {
-    private var isLeaving = false
 
-    val roomSharedState by distributedState.states.collectAsState(scope)
-    val participant get() = roomSharedState.participants[participantId]
+    private var state by roomState
 
-    init {
-        distributedState.states.onEach { state ->
-            if (!isLeaving && state.participants.contains(participantId) && !state.participants[participantId]!!.isActive) {
-                distributedState.update {
-                    updateParticipant(participantId) {
+    val name get() = state.name
+    val participant get() = state.participants[participantId]
+    val participants by derivedStateOf {  state.participants.values.sortedBy { it.name } }
+    val story get() = state.story
+
+    fun setStory(story: String) {
+        state = state.setStory(story)
+    }
+
+    val score get() = participant?.score
+
+    fun setScore(score: Int) {
+        participant?.also {
+            state = state.updateParticipant(it.uuid) {
+                this.setScore(score)
+            }
+        }
+    }
+
+    private val remainActiveJob = scope.launch {
+        snapshotFlow { state }
+            .onEach { updatedState ->
+                if (updatedState.participants.contains(participantId) && !updatedState.participants[participantId]!!.isActive) {
+                    state = state.updateParticipant(participantId) {
                         setActive()
                     }
                 }
             }
-        }.launchIn(scope)
-
-        /*tickerFlow(5.seconds, initialDelay = 5.seconds)
-            .onEach { cleanUpInactiveParticipants() }
-            .launchIn(scope)*/
+            .collect()
     }
 
-    fun setStory(story: String) {
-        distributedState.update {
-            setStory(story)
-        }
-    }
-
-    fun setScore(score: Int?) {
-        participant?.also {
-            distributedState.update {
-                updateParticipant(it.uuid) {
-                    setScore(score)
-                }
-            }
-        }
-    }
 
     override fun leave() {
         participant?.also {
-            isLeaving = true
-            distributedState.update {
-                println("Leaving: $participantId")
-                removeParticipant(it.uuid)
-            }
+            println("Removing participant: ${it.name}")
+            remainActiveJob.cancel()
+            state = state.removeParticipant(it.uuid)
         }
+    }
+
+    override fun dispose() {
+        scope.cancel()
     }
 }

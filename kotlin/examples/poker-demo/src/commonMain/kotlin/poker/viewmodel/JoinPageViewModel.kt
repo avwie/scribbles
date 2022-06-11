@@ -1,29 +1,24 @@
 package poker.viewmodel
 
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import kotlinx.coroutines.CoroutineScope
+import androidx.compose.runtime.setValue
 import nl.avwie.common.UUID
-import nl.avwie.crdt.convergent.DistributedMergeable
 import poker.sharedstate.Participant
-import poker.sharedstate.RoomSharedState
-import poker.util.collectAsState
-import kotlin.coroutines.EmptyCoroutineContext
+import poker.sharedstate.RoomState
 
 class JoinPageViewModel(
-    private val distributedState: DistributedMergeable<RoomSharedState>,
-    scope: CoroutineScope = CoroutineScope(EmptyCoroutineContext),
+    roomState: MutableState<RoomState>,
     private val onJoinRoom: (participantId: UUID) -> Unit = {}
 ) : PageViewModel() {
 
-    val roomSharedState by distributedState.states.collectAsState(scope)
-    val participantCount by derivedStateOf { roomSharedState.participants.count() }
+    var state by roomState
+    val participantCount by derivedStateOf { state.participants.count() }
 
     fun joinRoom(participantName: String) {
         val participant = Participant(participantName)
-        distributedState.update {
-            putParticipant(participant)
-        }
+        state = state.putParticipant(participant)
         onJoinRoom(participant.uuid)
     }
 }

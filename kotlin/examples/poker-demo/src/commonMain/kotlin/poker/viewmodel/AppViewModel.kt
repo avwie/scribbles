@@ -3,32 +3,32 @@ package poker.viewmodel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 import nl.avwie.common.UUID
 import nl.avwie.common.messagebus.MessageBusFactory
 import nl.avwie.common.persistence.KeyValueStore
 import nl.avwie.common.routing.Router
 import nl.avwie.common.routing.push
 import nl.avwie.common.uuid
-import nl.avwie.crdt.convergent.DistributedMergeable
-import nl.avwie.crdt.convergent.distributedMergeableOf
 import poker.routing.Route
-import poker.sharedstate.RoomSharedState
+import poker.sharedstate.DistributedMergeableState
+import poker.sharedstate.RoomState
+import poker.sharedstate.distributedMergeableStateOf
 import kotlin.coroutines.EmptyCoroutineContext
 
 class AppViewModel(
     private val router: Router<Route>,
     private val messageBusFactory: MessageBusFactory<String>,
-    private val stateCache: KeyValueStore<RoomSharedState>,
+    private val stateCache: KeyValueStore<RoomState>,
     private val scope: CoroutineScope = CoroutineScope(EmptyCoroutineContext)
 ) {
     var activeViewModel by mutableStateOf<PageViewModel>(CreatePageViewModel(::createRoom))
         private set
 
-    private var distributedState: DistributedMergeable<RoomSharedState>? = null
+    private var distributedState: DistributedMergeableState<RoomState>? = null
 
     init {
         router.activeRoute
@@ -48,43 +48,52 @@ class AppViewModel(
         activeViewModel.leave()
     }
 
-    private suspend fun navigate(route: Route) {
-        activeViewModel = when (route) {
+    private suspend fun navigate(route: Route) = updateViewModel {
+        when (route) {
             Route.Create -> CreatePageViewModel(onCreateRoom = ::createRoom)
             is Route.Join -> JoinPageViewModel(
                 onJoinRoom = { joinRoom(route.roomId, route.roomName, it) },
-                distributedState = getOrCreateDistributedState(route.roomId, route.roomName)
+                roomState = getOrCreateDistributedState(route.roomId, route.roomName)
             )
             is Route.Room -> RoomPageViewModel(
                 participantId = route.participantId,
-                distributedState = getOrCreateDistributedState(route.roomId, route.roomName)
+                roomState = getOrCreateDistributedState(route.roomId, route.roomName)
             )
             Route.Error -> ErrorPageViewModel("Page does not exist", router.history.activeLocation.value.toURL())
+        }
+    }
+
+    private suspend fun updateViewModel(block: suspend () -> PageViewModel) {
+        block().also {
+            activeViewModel.dispose()
+            activeViewModel = it
         }
     }
 
     private suspend fun getOrCreateDistributedState(
         roomId: UUID,
         roomName: String
-    ): DistributedMergeable<RoomSharedState> {
-        val initialState = stateCache.get(roomId.toString()) ?: RoomSharedState(roomName)
+    ): DistributedMergeableState<RoomState> {
+        val initialState = stateCache.get(roomId.toString()) ?: RoomState(roomName)
         if (distributedState == null) {
-            distributedState = distributedMergeableOf(
+            distributedState = distributedMergeableStateOf(
                 initialState = initialState,
                 messageBus = messageBusFactory.create(roomId.toString())
             )
+
+            distributedState?.also { state ->
+
+                // publish the new state for the first time, to trigger sync with others
+                state.publish()
+
+                // update the cache
+                snapshotFlow {
+                    state.value
+                }.onEach { newState ->
+                    stateCache.set(roomId.toString(), newState)
+                }.launchIn(scope)
+            }
         }
-
-        distributedState?.also { state ->
-
-            // publish the new state for the first time, to trigger sync with others
-            state.publish()
-
-            // update the cache
-            state.states.onEach { newState ->
-                stateCache.set(roomId.toString(), newState)
-            }.launchIn(scope)
-        }
-        return distributedState as DistributedMergeable<RoomSharedState>
+        return distributedState as DistributedMergeableState<RoomState>
     }
 }

@@ -12,7 +12,7 @@ fun JoinPage(viewModel: JoinPageViewModel) {
 
     Div {
         H2(attrs = { classes("text-center") }) {
-            Text("Joining ${viewModel.roomSharedState.name}")
+            Text("Joining ${viewModel.state.name}")
         }
 
         H5(attrs = { classes("text-center") }) {

@@ -5,12 +5,12 @@ import nl.avwie.common.UUID
 import nl.avwie.crdt.convergent.*
 
 @kotlinx.serialization.Serializable
-data class RoomSharedState(
+data class RoomState(
     @SerialName("name") private val _name: MergeableValue<String>,
     @SerialName("story") private val _story: MergeableValue<String>,
     @SerialName("revealed") private val _revealed: MergeableValue<Boolean>,
     val participants: MergeableMap<UUID, Participant>
-): Mergeable<RoomSharedState> {
+): Mergeable<RoomState> {
     val name by _name
     val story by _story
     val revealed by _revealed
@@ -37,7 +37,7 @@ data class RoomSharedState(
 
     fun removeParticipant(uuid: UUID) = updateParticipant(uuid) { setInactive() }
 
-    override fun merge(other: RoomSharedState): RoomSharedState = copy(
+    override fun merge(other: RoomState): RoomState = copy(
         _name = _name.merge(other._name),
         _story = _story.merge(other._story),
         _revealed = _revealed.merge(other._revealed),

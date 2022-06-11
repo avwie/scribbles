@@ -15,7 +15,7 @@ fun RoomPage(viewModel: RoomPageViewModel) {
     val pokerValues = listOf(1, 2, 3, 5, 8)
 
     Div {
-        H1(attrs = { classes("text-center")}) { Text("Scrum Poker Room - ${viewModel.roomSharedState.name}") }
+        H1(attrs = { classes("text-center")}) { Text("Scrum Poker Room - ${viewModel.name}") }
 
         Div(attrs = { classes("card", "mb-2")}) {
             Div(attrs = { classes("card-header")}) {
@@ -26,7 +26,7 @@ fun RoomPage(viewModel: RoomPageViewModel) {
                 Input(InputType.Text, attrs = {
                     classes("form-control")
                     placeholder("Enter story...")
-                    defaultValue(viewModel.roomSharedState.story)
+                    defaultValue(viewModel.story)
 
                     onKeyUp { event ->
                         val target = (event.target as HTMLInputElement)
@@ -43,7 +43,7 @@ fun RoomPage(viewModel: RoomPageViewModel) {
             }
             Div(attrs = { classes("card-body") }) {
                 Ul(attrs = { classes("list-group") }) {
-                    viewModel.roomSharedState.participants.values.sortedBy { it.name }.forEach { participant ->
+                    viewModel.participants.forEach { participant ->
                         Li(attrs = {
                             classes("list-group-item")
 
