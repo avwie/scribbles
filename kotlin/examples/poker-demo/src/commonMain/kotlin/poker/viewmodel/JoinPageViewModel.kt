@@ -14,7 +14,7 @@ class JoinPageViewModel(
 ) : PageViewModel() {
 
     var state by roomState
-    val participantCount by derivedStateOf { state.participants.count() }
+    val participantCount by derivedStateOf { state.participants.filterValues { it.isActive }.count() }
 
     fun joinRoom(participantName: String) {
         val participant = Participant(participantName)

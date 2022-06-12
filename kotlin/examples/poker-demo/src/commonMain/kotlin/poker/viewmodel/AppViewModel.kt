@@ -12,12 +12,14 @@ import nl.avwie.common.messagebus.MessageBusFactory
 import nl.avwie.common.persistence.KeyValueStore
 import nl.avwie.common.routing.Router
 import nl.avwie.common.routing.push
+import nl.avwie.common.tickerFlow
 import nl.avwie.common.uuid
 import poker.routing.Route
 import poker.sharedstate.DistributedMergeableState
 import poker.sharedstate.RoomState
 import poker.sharedstate.distributedMergeableStateOf
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.time.Duration.Companion.seconds
 
 class AppViewModel(
     private val router: Router<Route>,
@@ -33,6 +35,10 @@ class AppViewModel(
     init {
         router.activeRoute
             .onEach { route -> navigate(route) }
+            .launchIn(scope)
+
+        tickerFlow(10.seconds, 10.seconds)
+            .onEach { removeStaleParticipants() }
             .launchIn(scope)
     }
 
@@ -57,7 +63,8 @@ class AppViewModel(
             )
             is Route.Room -> RoomPageViewModel(
                 participantId = route.participantId,
-                roomState = getOrCreateDistributedState(route.roomId, route.roomName)
+                roomState = getOrCreateDistributedState(route.roomId, route.roomName),
+                invitationURL = Route.Join(route.roomId, route.roomName).url
             )
             Route.Error -> ErrorPageViewModel("Page does not exist", router.history.activeLocation.value.toURL())
         }
@@ -84,7 +91,7 @@ class AppViewModel(
             distributedState?.also { state ->
 
                 // publish the new state for the first time, to trigger sync with others
-                state.publish()
+                state.publish(force = true)
 
                 // update the cache
                 snapshotFlow {
@@ -95,5 +102,14 @@ class AppViewModel(
             }
         }
         return distributedState as DistributedMergeableState<RoomState>
+    }
+
+    private fun removeStaleParticipants() {
+        distributedState?.also { state ->
+            val staleParticipants = state.value.participants.values.filter { !it.isActive }
+            state.value = staleParticipants.fold(state.value) { acc, p ->
+                acc.removeParticipant(p.uuid)
+            }
+        }
     }
 }

@@ -1,6 +1,8 @@
 package poker.sharedstate
 
 import kotlinx.serialization.SerialName
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import nl.avwie.common.UUID
 import nl.avwie.crdt.convergent.*
 
@@ -35,7 +37,13 @@ data class RoomState(
         else -> throw IllegalArgumentException("poker.model.Participant with UUID $uuid does not exist")
     }
 
-    fun removeParticipant(uuid: UUID) = updateParticipant(uuid) { setInactive() }
+    fun removeParticipant(uuid: UUID) = copy(
+        participants = participants.remove(uuid)
+    )
+
+    override fun toString(): String {
+        return Json.encodeToString(this)
+    }
 
     override fun merge(other: RoomState): RoomState = copy(
         _name = _name.merge(other._name),

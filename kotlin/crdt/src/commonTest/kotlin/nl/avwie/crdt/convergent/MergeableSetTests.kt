@@ -1,6 +1,6 @@
 package nl.avwie.crdt.convergent
 
-import common.sleep
+import nl.avwie.common.sleep
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json

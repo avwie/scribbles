@@ -31,17 +31,22 @@ class DistributedMergeableState<T : Mergeable<T>>(
     private var lastUpdate: Update<T>? = null
 
     init {
+        println("Initial state:")
+        println(value)
+
         messageBus.messages
             .filter { update -> update.originator != originator }
             .onEach { update ->
+                println("Receiving from ${update.originator}")
                 if (update.state != value) {
+                    println("Updated state is different from own state")
                     val merged = value.merge(update.state)
                     if (value != merged) {
-                        println("Newly merged was different than current")
+                        println("Merged state is different from own state")
                         value = merged
                     } else {
-                        println("Merged was same as current, but update was different, so publishing")
-                        publish()
+                        println("Merged state is same from own state, but need to publish anyway")
+                        publish(force = true)
                     }
                 }
             }
@@ -49,22 +54,24 @@ class DistributedMergeableState<T : Mergeable<T>>(
 
         snapshotFlow { value }
             .onEach {
-                println("Sending value!")
+                println("My own state has changed, so I need to publish")
+                println(value)
                 publish()
             }
             .launchIn(scope)
     }
 
-    fun publish() {
+    fun publish(force: Boolean = false) {
         val update = Update(originator, this.value)
-        if (update != lastUpdate) {
+        println("Trying to publish (forced = $force)")
+        if (force || update != lastUpdate) {
+            println("Current update is different than last one or we are force (forced = $force)")
             lastUpdate = update
             scope.launch {
-                println("Publishing!")
                 messageBus.send(Update(originator, this@DistributedMergeableState.value))
             }
         } else {
-            println("Updates are the same, so not updating...")
+            println("Tried publishing, but message is the same as previous one")
         }
     }
 }
