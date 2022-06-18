@@ -1,6 +1,7 @@
 package nl.avwie.crdt.convergent
 
-import common.sleep
+import kotlinx.datetime.Clock
+import nl.avwie.common.sleep
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -11,6 +12,17 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 class MergeableValueTests {
+
+    @Test
+    fun equalTimestamps() {
+        val timestamp = Clock.System.now()
+        val a = MergeableValue(1, timestamp)
+        val b = MergeableValue(2, timestamp)
+
+        val c1 = a.merge(b)
+        val c2 = b.merge(a)
+        assertEquals(c1, c2)
+    }
 
     @Test
     @JsName("equalsTest")
@@ -57,5 +69,13 @@ class MergeableValueTests {
         val serialized = Json.encodeToString(x)
         val deserialized = Json.decodeFromString<MergeableValue<String>>(serialized)
         assertEquals(x, deserialized)
+    }
+
+    @Test
+    fun fuzz() {
+        val values = (0 until 1000).map { mergeableValueOf(it) }
+        val mergedA = values.shuffled().reduce { a, b -> a.merge(b) }
+        val mergedB = values.shuffled().reduce { a, b -> a.merge(b) }
+        assertEquals(mergedA, mergedB)
     }
 }
