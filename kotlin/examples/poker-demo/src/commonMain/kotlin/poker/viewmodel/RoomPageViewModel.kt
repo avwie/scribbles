@@ -1,58 +1,88 @@
 package poker.viewmodel
 
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import nl.avwie.common.UUID
-import nl.avwie.crdt.convergent.DistributedMergeable
-import poker.sharedstate.RoomSharedState
-import poker.util.collectAsState
+import poker.sharedstate.RoomState
 import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 
-fun tickerFlow(period: Duration, initialDelay: Duration = Duration.ZERO) = flow {
-    delay(initialDelay)
-    while (true) {
-        emit(Unit)
-        delay(period)
-    }
-}
 
 class RoomPageViewModel(
-    val participantId: UUID,
-    private val distributedState: DistributedMergeable<RoomSharedState>,
-    scope: CoroutineScope = CoroutineScope(EmptyCoroutineContext),
+    roomState: MutableState<RoomState>,
+    private val participantId: UUID,
+    private val invitationURL: String,
+    private val scope: CoroutineScope = CoroutineScope(EmptyCoroutineContext),
 ) : PageViewModel() {
 
-    val roomSharedState by distributedState.states.collectAsState(scope)
+    private var state by roomState
 
-    init {
-        roomSharedState.participants[participantId]?.let { participant ->
-            if (!participant.isActive) {
-                distributedState.update {
-                    updateParticipant(participantId) {
+    val name get() = state.name
+    val participant get() = state.participants[participantId]
+    val participants by derivedStateOf {  state.participants.values.sortedBy { it.name } }
+    val canReveal by derivedStateOf { participants.filter { it.isActive }.all { it.score != null } }
+    val story get() = state.story
+    val revealed get() = state.revealed
+    val average by derivedStateOf {
+        val avg = participants.filter { it.isActive }.mapNotNull { it.score }.average()
+        if (avg.isNaN()) 0.0 else avg
+    }
+
+    fun generateInvitation(): String {
+        return invitationURL
+    }
+
+    fun setStory(story: String) {
+        state = state.setStory(story)
+    }
+
+    fun setScore(score: Int) {
+        participant?.also {
+            state = state.updateParticipant(it.uuid) {
+                this.setScore(score)
+            }
+        }
+    }
+
+    fun clearAllScores() {
+        state = state.participants.keys.fold(state) { s, p ->
+            s.updateParticipant(p) {
+                setScore(null)
+            }
+        }.setRevealed(false)
+    }
+
+    fun reveal() {
+        state = state.setRevealed(true)
+    }
+
+    private val remainActiveJob = scope.launch {
+        snapshotFlow { state }
+            .onEach { updatedState ->
+                if (updatedState.participants.contains(participantId) && !updatedState.participants[participantId]!!.isActive) {
+                    state = state.updateParticipant(participantId) {
                         setActive()
                     }
                 }
             }
-        }
-
-        tickerFlow(5.seconds, initialDelay = 5.seconds)
-            .onEach { cleanUpInactiveParticipants() }
-            .launchIn(scope)
+            .collect()
     }
+
 
     override fun leave() {
-        distributedState.update {
-            removeParticipant(participantId)
+        participant?.also {
+            println("Removing participant: ${it.name}")
+            remainActiveJob.cancel()
+            state = state.updateParticipant(it.uuid) {
+                setInactive()
+            }
         }
     }
 
-    private fun cleanUpInactiveParticipants() {
-        println("Cleanup")
+    override fun dispose() {
+        scope.cancel()
     }
 }

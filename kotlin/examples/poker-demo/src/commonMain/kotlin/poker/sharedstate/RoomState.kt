@@ -1,22 +1,32 @@
 package poker.sharedstate
 
 import kotlinx.serialization.SerialName
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import nl.avwie.common.UUID
 import nl.avwie.crdt.convergent.*
 
 @kotlinx.serialization.Serializable
-data class RoomSharedState(
+data class RoomState(
     @SerialName("name") private val _name: MergeableValue<String>,
     @SerialName("story") private val _story: MergeableValue<String>,
+    @SerialName("revealed") private val _revealed: MergeableValue<Boolean>,
     val participants: MergeableMap<UUID, Participant>
-): Mergeable<RoomSharedState> {
+): Mergeable<RoomState> {
     val name by _name
+    val story by _story
+    val revealed by _revealed
 
-    constructor(name: String): this(mergeableValueOf(name), mergeableValueOf(""), mergeableMapOf())
+    constructor(name: String): this(
+        mergeableValueOf(name),
+        mergeableDistantPastValueOf(""),
+        mergeableDistantPastValueOf(false),
+        mergeableMapOf()
+    )
 
     fun setName(name: String) = copy(_name = mergeableValueOf(name))
-
     fun setStory(story: String) = copy(_story = mergeableValueOf(story))
+    fun setRevealed(revealed: Boolean) = copy(_revealed = mergeableValueOf(revealed))
 
     fun putParticipant(participant: Participant) = copy(
         participants = participants.put(participant.uuid, participant)
@@ -27,10 +37,18 @@ data class RoomSharedState(
         else -> throw IllegalArgumentException("poker.model.Participant with UUID $uuid does not exist")
     }
 
-    fun removeParticipant(uuid: UUID) = updateParticipant(uuid) { setInactive() }
+    fun removeParticipant(uuid: UUID) = copy(
+        participants = participants.remove(uuid)
+    )
 
-    override fun merge(other: RoomSharedState): RoomSharedState = copy(
+    override fun toString(): String {
+        return Json.encodeToString(this)
+    }
+
+    override fun merge(other: RoomState): RoomState = copy(
         _name = _name.merge(other._name),
+        _story = _story.merge(other._story),
+        _revealed = _revealed.merge(other._revealed),
         participants = participants.merge(other.participants)
     )
 }
@@ -60,7 +78,8 @@ data class Participant(
 
     override fun merge(other: Participant): Participant = copy(
         _name = _name.merge(other._name),
-        _score = _score.merge(other._score)
+        _score = _score.merge(other._score),
+        _active = _active.merge(other._active)
 
     )
 }

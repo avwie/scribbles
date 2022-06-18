@@ -43,3 +43,4 @@ class MergeableValue<T>(
 }
 
 fun <T> mergeableValueOf(value: T) = MergeableValue(value, Clock.System.now())
+fun <T> mergeableDistantPastValueOf(value: T) = MergeableValue(value, Instant.DISTANT_PAST)

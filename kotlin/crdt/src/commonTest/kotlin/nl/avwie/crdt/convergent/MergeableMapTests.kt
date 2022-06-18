@@ -10,6 +10,13 @@ import kotlin.test.assertTrue
 class MergeableMapTests {
 
     @Test
+    fun equality() {
+        val mapA = mergeableMapOf("a" to 1, "b" to 2).put("c", 3)
+        val mapB = Json.decodeFromString<MergeableMap<String, Int>>(Json.encodeToString(mapA))
+        assertEquals(mapA, mapB)
+    }
+
+    @Test
     fun add() {
         val map = mergeableMapOf("a" to 1, "b" to 2).put("c", 3)
         assertTrue { map.contains("c") }
