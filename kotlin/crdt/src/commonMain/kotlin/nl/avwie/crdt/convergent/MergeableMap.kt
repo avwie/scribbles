@@ -12,111 +12,99 @@ import kotlinx.serialization.encoding.*
 import kotlinx.serialization.serializer
 
 @kotlinx.serialization.Serializable(with = MergeableMapSerializer::class)
-data class MergeableMap<K, V>(
-    val map: PersistentMap<K, V>,
-    val timestamps: PersistentMap<K, Instant>,
+class MergeableMap<K, V>(
+    val map: PersistentMap<K, MergeableValue<V>>,
     val tombstones: PersistentSet<K>
-): Map<K, V> by map, Mergeable<MergeableMap<K, V>> {
+): Map<K, V>, Mergeable<MergeableMap<K, V>> {
 
     fun put(key: K, value: V): MergeableMap<K, V> = when {
         tombstones.contains(key) -> this
-        else -> copy(
-            map = map.put(key, value),
-            timestamps = timestamps.put(key, Clock.System.now())
+        else -> MergeableMap(
+            map = map.put(key, mergeableValueOf(value)),
+            tombstones = tombstones
         )
     }
 
     fun remove(key: K): MergeableMap<K, V> = when {
         tombstones.contains(key) -> this
         !map.containsKey(key) -> this
-        else -> copy(
+        else -> MergeableMap(
             map = map.remove(key),
-            timestamps.remove(key),
             tombstones = tombstones.add(key)
         )
     }
 
+    override val entries: Set<Map.Entry<K, V>> = map.entries.map { (k, v) ->
+        object : Map.Entry<K, V> {
+            override val key: K = k
+            override val value: V = v.value
+        }
+    }.toSet()
+
+    override val keys: Set<K> = map.keys
+    override val size: Int = map.size
+    override val values: Collection<V> = map.values.map { it.value }
+    override fun containsKey(key: K): Boolean = map.containsKey(key)
+    override fun containsValue(value: V): Boolean = map.containsValue(mergeableValueOf(value))
+    override fun get(key: K): V? = map[key]?.value
+    override fun isEmpty(): Boolean = map.isEmpty()
+
     override fun merge(other: MergeableMap<K, V>): MergeableMap<K, V> {
         val allTombstones = tombstones.addAll(other.tombstones)
         val allKeys = (map.keys + other.map.keys) - allTombstones
-
-        val timestampsBuilder = persistentMapOf<K, Instant>().builder()
-        val elementsBuilder = persistentMapOf<K, V>().builder()
+        val elementsBuilder = persistentMapOf<K, MergeableValue<V>>().builder()
 
         allKeys.forEach { key ->
-            val (left, right) = get(key) to other.get(key)
-            val (timestampLeft, timestampRight) = timestamps[key] to other.timestamps[key]
-            val (element, elementTimestamp) = determine(left, right, timestampLeft, timestampRight)
-            elementsBuilder[key] = element
-            timestampsBuilder[key] = elementTimestamp
+            val (left, right) = map[key] to other.map[key]
+            val winner = when {
+                left != null && right == null -> left
+                left == null && right != null -> right
+                else -> left!!.merge(right!!)
+            }
+            elementsBuilder[key] = winner
         }
 
         return MergeableMap(
             map = elementsBuilder.build(),
-            timestamps = timestampsBuilder.build(),
             tombstones = allTombstones
         )
-    }
-
-    private fun determine(
-        left: V?,
-        right: V?,
-        leftTimestamp: Instant?,
-        rightTimestamp: Instant?
-    ): Pair<V, Instant> = when {
-        left != null && right == null -> left to leftTimestamp!!
-        left == null && right != null -> right to rightTimestamp!!
-
-        left == null || right == null -> throw IllegalStateException("Items can't be null now")
-        leftTimestamp == null || rightTimestamp == null -> throw IllegalStateException("Timestamps can't be null")
-
-        leftTimestamp >= rightTimestamp -> left to leftTimestamp
-        leftTimestamp < rightTimestamp -> right to rightTimestamp
-        left.hashCode() >= right.hashCode() -> left to leftTimestamp
-        else -> right to rightTimestamp
     }
 }
 
 class MergeableMapSerializer<K, V>(keySerializer: KSerializer<K>, valueSerializer: KSerializer<V>) : KSerializer<MergeableMap<K, V>> {
 
-    private val mapSerializer = MapSerializer(keySerializer, valueSerializer)
-    private val timestampsSerializer = MapSerializer(keySerializer, Instant.serializer())
+    private val mapSerializer = MapSerializer(keySerializer, MergeableValue.serializer(valueSerializer))
     private val tombstonesSerializer = SetSerializer(keySerializer)
 
     override val descriptor: SerialDescriptor = buildClassSerialDescriptor("mergeableMap") {
         element("map", descriptor = mapSerializer.descriptor)
-        element("timestamps", descriptor = timestampsSerializer.descriptor)
         element("tombstones", descriptor = tombstonesSerializer.descriptor)
     }
 
     override fun serialize(encoder: Encoder, value: MergeableMap<K, V>) {
         encoder.encodeStructure(descriptor) {
             encodeSerializableElement(descriptor, 0, mapSerializer, value.map)
-            encodeSerializableElement(descriptor, 1, timestampsSerializer, value.timestamps)
-            encodeSerializableElement(descriptor, 2, tombstonesSerializer, value.tombstones)
+            encodeSerializableElement(descriptor, 1, tombstonesSerializer, value.tombstones)
         }
     }
 
     override fun deserialize(decoder: Decoder): MergeableMap<K, V> = decoder.decodeStructure(descriptor) {
-        var map: Map<K, V> = mapOf()
-        var timestamps: Map<K, Instant> = mapOf()
+        var map: Map<K, MergeableValue<V>> = mapOf()
         var tombstones: Set<K> = setOf()
 
         while (true) {
             when (val index = decodeElementIndex(descriptor)) {
                 0 -> map = decodeSerializableElement(descriptor, index, mapSerializer)
-                1 -> timestamps = decodeSerializableElement(descriptor, index, timestampsSerializer)
-                2 -> tombstones = decodeSerializableElement(descriptor, index, tombstonesSerializer)
+                1 -> tombstones = decodeSerializableElement(descriptor, index, tombstonesSerializer)
                 CompositeDecoder.DECODE_DONE -> break
             }
         }
-        MergeableMap(map.toPersistentMap(), timestamps.toPersistentMap(), tombstones.toPersistentSet())
+        MergeableMap(map.toPersistentMap(), tombstones.toPersistentSet())
     }
 }
 
 fun <K, V> mergeableMapOf(map: Map<K, V>): MergeableMap<K, V> = MergeableMap(
-    map.toPersistentMap(),
-    map.keys.associateWith { Clock.System.now() }.toPersistentMap(),
+    map.mapValues { (_, v) -> mergeableValueOf(v) }.toPersistentMap(),
     persistentSetOf()
 )
 
