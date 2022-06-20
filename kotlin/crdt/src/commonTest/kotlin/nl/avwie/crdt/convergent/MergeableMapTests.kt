@@ -5,6 +5,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class MergeableMapTests {
@@ -24,12 +25,34 @@ class MergeableMapTests {
     }
 
     @Test
+    fun remove() {
+        val map = mergeableMapOf("a" to 1, "b" to 2).remove("a")
+        assertEquals(null, map.get("a"))
+    }
+
+    @Test
     fun addWithTombstone() {
         val map = mergeableMapOf("a" to 1, "b" to 2).remove("c").put("c", 3)
         assertEquals(3, map["c"])
 
         val map2 = map.remove("c").put("c", 4)
-        assertEquals(null, map2["c"])
+        assertEquals(4, map2["c"])
+    }
+
+    @Test
+    fun mergeWithTombstone() {
+        val map = mergeableMapOf("a" to 1, "b" to 2)
+        val map2 = mergeableMapOf("a" to 1, "b" to 2).remove("b")
+        val merged = map.merge(map2)
+        assertFalse { merged.contains("b") }
+    }
+
+    @Test
+    fun mergeWithTombstoneReversed() {
+        val map2 = mergeableMapOf("a" to 1, "b" to 2).remove("b")
+        val map = mergeableMapOf("a" to 1, "b" to 2)
+        val merged = map.merge(map2)
+        assertTrue { merged.contains("b") }
     }
 
     @Test

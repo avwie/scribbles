@@ -7,7 +7,7 @@ import kotlin.reflect.KProperty
 @kotlinx.serialization.Serializable
 class MergeableValue<T>(
     val value: T,
-    private val timestamp: Instant
+    val timestamp: Instant
 ) : Mergeable<MergeableValue<T>> {
 
     operator fun getValue(thisRef: Any?, property: KProperty<*>): T {
