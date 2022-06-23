@@ -3,6 +3,7 @@ package nl.avwie.crdt.convergent
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -13,7 +14,7 @@ class MergeableMapTests {
     @Test
     fun equality() {
         val mapA = mergeableMapOf("a" to 1, "b" to 2).put("c", 3)
-        val mapB = Json.decodeFromString<MergeableMap<String, Int>>(Json.encodeToString(mapA))
+        val mapB = mergeableMapOf("a" to 1, "b" to 2).put("c", 3)
         assertEquals(mapA, mapB)
     }
 
@@ -27,7 +28,7 @@ class MergeableMapTests {
     @Test
     fun remove() {
         val map = mergeableMapOf("a" to 1, "b" to 2).remove("a")
-        assertEquals(null, map.get("a"))
+        assertEquals(null, map["a"])
     }
 
     @Test
@@ -53,6 +54,38 @@ class MergeableMapTests {
         val map = mergeableMapOf("a" to 1, "b" to 2)
         val merged = map.merge(map2)
         assertTrue { merged.contains("b") }
+    }
+
+    @Test
+    fun fuzzing() {
+        val keysAndValues = (0 until 1000).toList()
+
+        val added = mutableSetOf<Int>()
+        val removed = mutableSetOf<Int>()
+
+        fun generate() = keysAndValues.fold(mergeableMapOf<Int, String>()) { acc, i ->
+            when  {
+                Random.nextFloat() < .7 -> {
+                    added.add(i)
+                    acc.put(i, i.toString())
+                }
+                else -> acc
+            }
+        }
+
+        fun remove(map: MergeableMap<Int, String>) = keysAndValues.fold(map) { acc, i ->
+            when {
+                Random.nextFloat() < .1 -> {
+                    removed.add(i)
+                    acc.remove(i)
+                }
+                else -> acc
+            }
+        }
+
+        val merged = merge(listOf(generate(), generate(), generate()).map { remove(it) })
+        val totals = added - removed
+        assertEquals(totals.size, merged.keys.size)
     }
 
     @Test
