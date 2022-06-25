@@ -6,59 +6,48 @@ import nl.avwie.common.UUID
 import nl.avwie.common.uuid
 import kotlin.coroutines.EmptyCoroutineContext
 
-class DistributedMergeable<T : Mergeable<T>>(
-    val stateFlow: MutableStateFlow<T>,
-    val sharedFlow: MutableSharedFlow<Update<T>>,
-    private val sourceId: UUID,
-    val scope: CoroutineScope,
-): MutableStateFlow<T> by stateFlow {
+interface DistributedMergeable<T : Mergeable<T>> {
+    val bus: MutableSharedFlow<Update<T>>
+    val states: StateFlow<T>
+    fun publish(update: T)
 
     @kotlinx.serialization.Serializable
-    data class Update<T : Mergeable<T>>(val sourceId: UUID, val state: T)
+    data class Update<T : Mergeable<T>>(val source: UUID, val value: T)
+}
+
+class DistributedMergeableImpl<T : Mergeable<T>>(
+    initialValue: T,
+    override val bus: MutableSharedFlow<DistributedMergeable.Update<T>>,
+    val scope: CoroutineScope,
+    val source: UUID,
+) : DistributedMergeable<T> {
+
+    private val _states = MutableStateFlow(initialValue)
+    override val states: StateFlow<T> = _states
 
     init {
         // publish
-        stateFlow.onEach { update ->
-            println("${sourceId}: Emitting update: ${Update(sourceId, update)}")
-            sharedFlow.emit(Update(sourceId, update))
+        _states.onEach { newState ->
+            bus.emit(DistributedMergeable.Update(source, newState))
         }.launchIn(scope)
 
         // subscribe
-        sharedFlow.onEach { update ->
-            println("${sourceId}: Receiving update: $update")
-            if (update.sourceId == sourceId) {
-                println("Received from myself!")
-                return@onEach
-            }
-
-            if (update.state == stateFlow.value) {
-                println("${sourceId}: Received same value: ${update.state}, ${stateFlow.value}")
-                return@onEach
-            }
-
-            // different, so update
-            while (true) {
-                val current = stateFlow.value
-                val merged = current.merge(update.state)
-                if (stateFlow.compareAndSet(current, merged)) {
-                    println("${sourceId}: Updated value to $merged")
-                    return@onEach
-                }
-            }
+        bus.onEach { update ->
+            if (update.source == source) return@onEach
+            if (update.value == states.value) return@onEach
+            _states.value = states.value.merge(update.value)
         }.launchIn(scope)
     }
 
-    operator fun component1() = stateFlow
-    operator fun component2() = sharedFlow
-
-    companion object {
-        operator fun <T : Mergeable<T>> invoke(
-            mergeable: T,
-            sharedFlow: MutableSharedFlow<Update<T>> = MutableSharedFlow(),
-            sourceId: UUID = uuid(),
-            scope: CoroutineScope = CoroutineScope(EmptyCoroutineContext)
-        ) = DistributedMergeable(MutableStateFlow(mergeable), sharedFlow, sourceId, scope)
+    override fun publish(update: T) {
+        _states.update { update }
     }
 }
 
-fun <T : Mergeable<T>> T.asDistributed() = DistributedMergeable(this)
+val <T : Mergeable<T>> DistributedMergeable<T>.value get() = states.value
+fun <T : Mergeable<T>> DistributedMergeable<T>.update(block: (currentState: T) -> T) = publish(block(value))
+
+fun <T : Mergeable<T>> T.asDistributed(): DistributedMergeable<T> =
+    DistributedMergeableImpl(this, MutableSharedFlow(), CoroutineScope(EmptyCoroutineContext), uuid())
+
+//fun <T : Mergeable<T>> T.distribute(): Pair<MutableStateFlow<T>, Mut

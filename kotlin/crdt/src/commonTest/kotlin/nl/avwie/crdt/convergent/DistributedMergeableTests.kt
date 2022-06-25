@@ -1,6 +1,7 @@
 package nl.avwie.crdt.convergent
 
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -16,26 +17,31 @@ class DistributedMergeableTests {
 
     @Test
     fun distributedTest() = runTest {
-        val (state, bus) = mergeableValueOf("Foo").asDistributed()
+        val distributedMergeable = mergeableValueOf("Foo").asDistributed()
+        val bus = distributedMergeable.bus
+
         val states = mutableListOf<String>()
         val job = launch(UnconfinedTestDispatcher(testScheduler)) {
-            bus.take(2).collect {
-                println("Receiving in collector: ${it}")
-                states.add(it.state.value)
+            bus.collect {
+                states.add(it.value.value)
             }
         }
 
-        state.update { mergeableValueOf("Bar") }
+        distributedMergeable.update { mergeableValueOf("Bar") }
 
-        job.join()
-        assertEquals(2, states.size)
-        assertEquals("Foo", states[0])
-        assertEquals("Bar", states[1])
+        runWhen({ states.size == 2}) {
+            assertEquals(2, states.size)
+            assertEquals("Foo", states[0])
+            assertEquals("Bar", states[1])
+
+            job.cancel()
+        }
     }
 
     @Test
     fun distributedTest2() = runTest {
-        val (state, bus) = mergeableValueOf("Foo").asDistributed()
+        val distributedMergeable = mergeableValueOf("Foo").asDistributed()
+        val bus = distributedMergeable.bus
 
         val states = mutableListOf<DistributedMergeable.Update<MergeableValue<String>>>()
         val job = launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -47,14 +53,14 @@ class DistributedMergeableTests {
 
         val otherSource = uuid()
 
-        state.update { mergeableValueOf("Bar") }
+        distributedMergeable.update { mergeableValueOf("Bar") }
         bus.emit(DistributedMergeable.Update(otherSource, mergeableValueOf("Bar")))
         bus.emit(DistributedMergeable.Update(otherSource, mergeableValueOf("Baz")))
 
-        delayUntil { states.size == 5 }
+        runWhen({ states.size == 5}) {
+            assertEquals(5, states.size)
+        }
         job.cancel()
-
-        assertEquals(5, states.size)
     }
 
     private suspend fun delayUntil(step: Long= 5, max: Long = 10000, predicate: () -> Boolean) {
@@ -63,5 +69,11 @@ class DistributedMergeableTests {
             delay(step)
             t += step
         }
+        if (t > max) throw Error("Timout")
+    }
+
+    private suspend fun runWhen(predicate: () -> Boolean, block: () -> Unit) {
+        delayUntil(predicate = predicate)
+        block()
     }
 }

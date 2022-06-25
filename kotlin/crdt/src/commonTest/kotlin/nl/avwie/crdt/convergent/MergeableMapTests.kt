@@ -3,6 +3,7 @@ package nl.avwie.crdt.convergent
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import nl.avwie.common.sleep
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -51,6 +52,7 @@ class MergeableMapTests {
     @Test
     fun mergeWithTombstoneReversed() {
         val map2 = mergeableMapOf("a" to 1, "b" to 2).remove("b")
+        sleep(1)
         val map = mergeableMapOf("a" to 1, "b" to 2)
         val merged = map.merge(map2)
         assertTrue { merged.contains("b") }

@@ -60,7 +60,7 @@ data class MergeableMap<K, V>(
                 !allTombstones.contains(key) -> {
                     elements[key] = winner
                 }
-                winner.timestamp >= allTombstones[key]!! -> {
+                winner.timestamp > allTombstones[key]!! -> {
                     allTombstones.remove(key)
                     elements[key] = winner
                 }
