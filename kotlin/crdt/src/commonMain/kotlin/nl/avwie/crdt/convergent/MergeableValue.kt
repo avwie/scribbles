@@ -23,6 +23,10 @@ class MergeableValue<T>(
         else -> this
     }
 
+    override fun toString(): String {
+        return "$value [${timestamp}]"
+    }
+
     /**
      * If they are equal in value it doesn't really matter what the timestamp is
      */
