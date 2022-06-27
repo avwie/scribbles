@@ -23,26 +23,31 @@ class DistributedMergeableTests {
 
     @Test
     fun distributedTest2() = runTest {
-        val updates = MutableSharedFlow<DistributedMergeable.Update<MergeableValue<String>>>()
+        launch {
+            val updates = MutableSharedFlow<DistributedMergeable.Update<MergeableValue<String>>>()
+            val distributedMergeable = DistributedMergeable(
+                    MergeableValue("Bar", Instant.fromEpochMilliseconds(0)),
+                    updates = updates,
+                    scope = this
+            )
+            runCurrent() // make sure the handlers are registered
 
-        val distributedMergeable = DistributedMergeable(
-                MergeableValue("Bar", Instant.fromEpochMilliseconds(0)),
-                updates = updates,
-                scope = this
-        ).awaitInitialization()
+            val otherSource = uuid()
+            updates.emit(DistributedMergeable.Update(
+                    otherSource,
+                    MergeableValue("Baz", Instant.fromEpochMilliseconds(1))
+            ))
 
-        val otherSource = uuid()
-        updates.emit(DistributedMergeable.Update(
-                otherSource,
-                MergeableValue("Baz", Instant.fromEpochMilliseconds(1))
-        ))
+            updates.emit(
+                    DistributedMergeable.Update(
+                            otherSource,
+                            MergeableValue("Bat", Instant.fromEpochMilliseconds(2))
+                    )
+            )
 
-        updates.emit(
-                DistributedMergeable.Update(
-                        otherSource,
-                        MergeableValue("Bat", Instant.fromEpochMilliseconds(2))
-                )
-        )
-        assertEquals("Bat", distributedMergeable.value.value)
+            runCurrent() // make sure the events have emitted
+            assertEquals("Bat", distributedMergeable.value.value)
+            distributedMergeable.close()
+        }.join()
     }
 }

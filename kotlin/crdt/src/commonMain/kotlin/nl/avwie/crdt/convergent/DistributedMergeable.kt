@@ -12,8 +12,6 @@ interface DistributedMergeable<T : Mergeable<T>> : Mergeable<T> {
     val states: StateFlow<T>
     fun update(block: (current: T) -> T)
     fun close()
-
-    suspend fun awaitInitialization(): DistributedMergeable<T>
     data class Update<T : Mergeable<T>>(val source: UUID, val value: T)
 }
 
@@ -37,28 +35,19 @@ class DistributedMergeableImpl<T : Mergeable<T>>(
 
     private val initializeJob = Job()
     init {
-        states.onEach { newState ->
-            updates.emit(DistributedMergeable.Update(source, newState))
-        }.launchIn(scope + initializeJob)
+        scope.launch {
+            states.onEach { newState ->
+                updates.emit(DistributedMergeable.Update(source, newState))
+            }.launchIn(this)
 
-        updates.onEach { update ->
-            if (update.source == source) return@onEach
-            if (update.value == states.value) return@onEach
+            updates.onEach { update ->
+                if (update.source == source) return@onEach
+                if (update.value == states.value) return@onEach
 
-            val merged = states.value.merge(update.value)
-            _states.value = merged
-        }.launchIn(scope + initializeJob)
-    }
-
-    override suspend fun awaitInitialization(): DistributedMergeable<T> {
-        coroutineScope {
-            launch {
-                while (initializeJob.children.any { !it.isActive }) {
-                    delay(1)
-                }
-            }.join()
+                val merged = states.value.merge(update.value)
+                _states.value = merged
+            }.launchIn(this)
         }
-        return this
     }
 
     override fun update(block: (current: T) -> T) = _states.update(block)
