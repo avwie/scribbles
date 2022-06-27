@@ -32,8 +32,6 @@ class DistributedMergeableImpl<T : Mergeable<T>>(
 ) : DistributedMergeable<T>, Mergeable<T> {
     private val _states: MutableStateFlow<T> = MutableStateFlow(initialState)
     override val states: StateFlow<T> = _states
-
-    private val initializeJob = Job()
     init {
         scope.launch {
             states.onEach { newState ->

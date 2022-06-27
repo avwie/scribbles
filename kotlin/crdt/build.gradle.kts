@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     kotlin("multiplatform")
     kotlin("plugin.serialization")
@@ -14,9 +16,12 @@ kotlin {
     jvm()
 
     js(IR) {
-        browser()
+        browser {}
     }
 
+    tasks.withType<KotlinCompile>().configureEach {
+        kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
+    }
 
     sourceSets {
         val commonMain by getting {
