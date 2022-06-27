@@ -2,15 +2,9 @@ package nl.avwie.crdt.convergent
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.test.advanceTimeBy
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Instant
-import nl.avwie.common.coroutines.serializeWith
 import nl.avwie.common.uuid
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -21,7 +15,7 @@ class DistributedMergeableTests {
     @Test
     fun singleUser() = runTest {
         launch {
-            val distributedMergeable = DistributedMergeable(mergeableValueOf("Foo"), scope = this)
+            val distributedMergeable = mergeableValueOf("Foo").distributeIn(scope = this)
             distributedMergeable.update { mergeableValueOf("Bar") }
             assertEquals("Bar", distributedMergeable.value.value)
             distributedMergeable.close()
@@ -32,11 +26,9 @@ class DistributedMergeableTests {
     fun incomingUpdates() = runTest {
         launch {
             val updates = MutableSharedFlow<DistributedMergeable.Update<MergeableValue<String>>>()
-            val distributedMergeable = DistributedMergeable(
-                    MergeableValue("Bar", Instant.fromEpochMilliseconds(0)),
-                    updates = updates,
-                    scope = this
-            )
+            val distributedMergeable = MergeableValue("Bar", Instant.fromEpochMilliseconds(0))
+                .distributeIn(updates = updates, scope = this)
+
             runCurrent() // make sure the handlers are registered
 
             val otherSource = uuid()
@@ -62,18 +54,10 @@ class DistributedMergeableTests {
     fun distributedUpdates() = runTest {
         launch {
             val updates = MutableSharedFlow<DistributedMergeable.Update<MergeableValue<String>>>()
-            val clientA = DistributedMergeable(
-                    MergeableValue("Bar", Instant.fromEpochMilliseconds(0)),
-                    updates = updates,
-                    scope = this
-            )
-            runCurrent()
-
-            val clientB = DistributedMergeable(
-                    MergeableValue("Baz", Instant.fromEpochMilliseconds(1)),
-                    updates = updates,
-                    scope = this
-            )
+            val clientA = MergeableValue("Bar", Instant.fromEpochMilliseconds(0))
+                .distributeIn(updates = updates, scope = this)
+            val clientB = MergeableValue("Baz", Instant.fromEpochMilliseconds(0))
+                .distributeIn(updates = updates, scope = this)
             runCurrent()
 
             assertEquals("Baz", clientA.value.value)

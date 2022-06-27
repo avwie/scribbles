@@ -10,6 +10,8 @@ interface DistributedMergeable<T : Mergeable<T>> : Mergeable<T> {
     val source: UUID
 
     val states: StateFlow<T>
+    val updates: MutableSharedFlow<Update<T>>
+
     fun update(block: (current: T) -> T)
     fun close()
 
@@ -19,18 +21,17 @@ interface DistributedMergeable<T : Mergeable<T>> : Mergeable<T> {
 
 val <T : Mergeable<T>> DistributedMergeable<T>.value get() = this.states.value
 
-fun <T : Mergeable<T>> DistributedMergeable(
-    initialState: T,
-    source: UUID = uuid(),
+fun <T : Mergeable<T>> T.distributeIn(
+    updates: MutableSharedFlow<DistributedMergeable.Update<T>> = MutableSharedFlow(),
     scope: CoroutineScope = CoroutineScope(EmptyCoroutineContext),
-    updates: MutableSharedFlow<DistributedMergeable.Update<T>> = MutableSharedFlow()
-): DistributedMergeable<T> = DistributedMergeableImpl(initialState, source, scope, updates)
+    identifier: UUID = uuid()
+): DistributedMergeable<T> = DistributedMergeableImpl(this, identifier, scope, updates)
 
-class DistributedMergeableImpl<T : Mergeable<T>>(
+private class DistributedMergeableImpl<T : Mergeable<T>>(
     initialState: T,
     override val source: UUID,
     private val scope: CoroutineScope,
-    private val updates: MutableSharedFlow<DistributedMergeable.Update<T>>
+    override val updates: MutableSharedFlow<DistributedMergeable.Update<T>>
 ) : DistributedMergeable<T>, Mergeable<T> {
     private val _states: MutableStateFlow<T> = MutableStateFlow(initialState)
     override val states: StateFlow<T> = _states
