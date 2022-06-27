@@ -2,12 +2,15 @@ package nl.avwie.crdt.convergent
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Instant
+import nl.avwie.common.coroutines.serializeWith
 import nl.avwie.common.uuid
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -59,7 +62,6 @@ class DistributedMergeableTests {
     fun distributedUpdates() = runTest {
         launch {
             val updates = MutableSharedFlow<DistributedMergeable.Update<MergeableValue<String>>>()
-
             val clientA = DistributedMergeable(
                     MergeableValue("Bar", Instant.fromEpochMilliseconds(0)),
                     updates = updates,

@@ -12,7 +12,9 @@ interface DistributedMergeable<T : Mergeable<T>> : Mergeable<T> {
     val states: StateFlow<T>
     fun update(block: (current: T) -> T)
     fun close()
-    data class Update<T : Mergeable<T>>(val source: UUID, val value: T)
+
+    @kotlinx.serialization.Serializable
+    data class Update<T : Mergeable<T>>(val source: UUID, val update: T)
 }
 
 val <T : Mergeable<T>> DistributedMergeable<T>.value get() = this.states.value
@@ -40,9 +42,9 @@ class DistributedMergeableImpl<T : Mergeable<T>>(
 
             updates.onEach { update ->
                 if (update.source == source) return@onEach
-                if (update.value == states.value) return@onEach
+                if (update.update == states.value) return@onEach
 
-                val merged = states.value.merge(update.value)
+                val merged = states.value.merge(update.update)
                 _states.value = merged
             }.launchIn(this)
         }
