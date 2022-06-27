@@ -6,51 +6,69 @@ import nl.avwie.common.UUID
 import nl.avwie.common.uuid
 import kotlin.coroutines.EmptyCoroutineContext
 
-data class DistributedMergeable<T : Mergeable<T>>(
-    val states: MutableStateFlow<T>,
-    val updates: MutableSharedFlow<Update<T>>,
-    val job: Job
-) {
+interface DistributedMergeable<T : Mergeable<T>> : Mergeable<T> {
+    val source: UUID
+
+    val states: StateFlow<T>
+    fun update(block: (current: T) -> T)
+    fun close()
+
+    suspend fun awaitInitialization(): DistributedMergeable<T>
     data class Update<T : Mergeable<T>>(val source: UUID, val value: T)
 }
 
-suspend fun <T : Mergeable<T>> T.distribute(
-    updates: MutableSharedFlow<DistributedMergeable.Update<T>>,
-    scope: CoroutineScope
-): DistributedMergeable<T> {
-    val source = uuid()
-    val states = MutableStateFlow(this)
+val <T : Mergeable<T>> DistributedMergeable<T>.value get() = this.states.value
 
-    val job = scope.launch {
+fun <T : Mergeable<T>> DistributedMergeable(
+    initialState: T,
+    source: UUID = uuid(),
+    scope: CoroutineScope = CoroutineScope(EmptyCoroutineContext),
+    updates: MutableSharedFlow<DistributedMergeable.Update<T>> = MutableSharedFlow()
+): DistributedMergeable<T> = DistributedMergeableImpl(initialState, source, scope, updates)
+
+class DistributedMergeableImpl<T : Mergeable<T>>(
+    initialState: T,
+    override val source: UUID,
+    private val scope: CoroutineScope,
+    private val updates: MutableSharedFlow<DistributedMergeable.Update<T>>
+) : DistributedMergeable<T>, Mergeable<T> {
+    private val _states: MutableStateFlow<T> = MutableStateFlow(initialState)
+    override val states: StateFlow<T> = _states
+
+    private val initializeJob = Job()
+    init {
         states.onEach { newState ->
             updates.emit(DistributedMergeable.Update(source, newState))
-        }.launchIn(this)
+        }.launchIn(scope + initializeJob)
 
         updates.onEach { update ->
-            println(update)
-            if (update.source == source) {
-                println("Same source: $update")
-                return@onEach
-            }
-            if (update.value == states.value) {
-                println("Same state: $update")
-                return@onEach
-            }
+            if (update.source == source) return@onEach
+            if (update.value == states.value) return@onEach
+
             val merged = states.value.merge(update.value)
-            println("Merged: $update -> $merged")
-            states.value = merged
-        }.launchIn(this)
+            _states.value = merged
+        }.launchIn(scope + initializeJob)
     }
 
-    // await start
-    scope.launch {
-        while (job.children.any { !it.isActive }) {
-            delay(1)
+    override suspend fun awaitInitialization(): DistributedMergeable<T> {
+        coroutineScope {
+            launch {
+                while (initializeJob.children.any { !it.isActive }) {
+                    delay(1)
+                }
+            }.join()
         }
-    }.join()
+        return this
+    }
 
-    return DistributedMergeable(states, updates, job)
+    override fun update(block: (current: T) -> T) = _states.update(block)
+
+    override fun close() {
+        scope.cancel()
+    }
+
+    override fun merge(other: T): T {
+        update { current -> current.merge(other) }
+        return value
+    }
 }
-
-suspend fun <T : Mergeable<T>> T.distribute(scope: CoroutineScope): DistributedMergeable<T> =
-    distribute(MutableSharedFlow(), scope)

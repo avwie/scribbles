@@ -1,6 +1,7 @@
 package nl.avwie.crdt.convergent
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -15,43 +16,33 @@ class DistributedMergeableTests {
 
     @Test
     fun distributedTest() = runTest {
-        val (state, _, job) = mergeableValueOf("Foo").distribute(this)
-        state.update { mergeableValueOf("Bar") }
-        assertEquals("Bar", state.value.value)
-        job.cancel()
+        val distributedMergeable = DistributedMergeable(mergeableValueOf("Foo"), scope = this)
+        distributedMergeable.update { mergeableValueOf("Bar") }
+        assertEquals("Bar", distributedMergeable.value.value)
     }
 
     @Test
     fun distributedTest2() = runTest {
-        val (state, updates, job) = MergeableValue("Bar", Instant.fromEpochMilliseconds(0)).distribute(this)
-        val otherSource = uuid()
-        launch {
-            updates.emit(
-                DistributedMergeable.Update(
-                    otherSource,
-                    MergeableValue("Baz", Instant.fromEpochMilliseconds(1))
-                )
-            )
-            updates.emit(
-                DistributedMergeable.Update(
-                    otherSource,
-                    MergeableValue("Bat", Instant.fromEpochMilliseconds(2))
-                )
-            )
-        }
-        runCurrent()
-        assertEquals("Bat", state.value.value)
-        job.cancel()
-    }
+        val updates = MutableSharedFlow<DistributedMergeable.Update<MergeableValue<String>>>()
 
-    suspend inline fun selfCancellingScope(crossinline block: CoroutineScope.() -> Unit) {
-        try {
-            coroutineScope {
-                block(this)
-                cancel()
-            }
-        } catch (ex: CancellationException) {
-            println("Needed to cancel the the inner scope")
-        }
+        val distributedMergeable = DistributedMergeable(
+                MergeableValue("Bar", Instant.fromEpochMilliseconds(0)),
+                updates = updates,
+                scope = this
+        ).awaitInitialization()
+
+        val otherSource = uuid()
+        updates.emit(DistributedMergeable.Update(
+                otherSource,
+                MergeableValue("Baz", Instant.fromEpochMilliseconds(1))
+        ))
+
+        updates.emit(
+                DistributedMergeable.Update(
+                        otherSource,
+                        MergeableValue("Bat", Instant.fromEpochMilliseconds(2))
+                )
+        )
+        assertEquals("Bat", distributedMergeable.value.value)
     }
 }
