@@ -2,10 +2,11 @@ package nl.avwie.crdt.convergent
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Instant
-import nl.avwie.common.coroutines.Distributed
+import nl.avwie.common.coroutines.DistributedMessage
 import nl.avwie.common.uuid
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -16,17 +17,17 @@ class DistributedMergeableTests {
     @Test
     fun singleUser() = runTest {
         launch {
-            val distributedMergeable = mergeableValueOf("Foo").distributeIn(scope = this)
+            val (distributedMergeable, _) = mergeableValueOf("Foo").distribute(scope = this)
             distributedMergeable.update { mergeableValueOf("Bar") }
             assertEquals("Bar", distributedMergeable.value.value)
-            distributedMergeable.close()
+            cancel()
         }.join()
     }
 
     @Test
     fun incomingUpdates() = runTest {
         launch {
-            val updates = MutableSharedFlow<Distributed<MergeableValue<String>>>()
+            val updates = MutableSharedFlow<DistributedMessage<MergeableValue<String>>>()
             val distributedMergeable = MergeableValue("Bar", Instant.fromEpochMilliseconds(0))
                 .distributeIn(updates = updates, scope = this)
 
@@ -34,14 +35,14 @@ class DistributedMergeableTests {
 
             val otherSource = uuid()
             updates.emit(
-                Distributed(
+                DistributedMessage(
                     otherSource,
                     MergeableValue("Baz", Instant.fromEpochMilliseconds(1))
             )
             )
 
             updates.emit(
-                Distributed(
+                DistributedMessage(
                             otherSource,
                             MergeableValue("Bat", Instant.fromEpochMilliseconds(2))
                     )
@@ -49,14 +50,14 @@ class DistributedMergeableTests {
 
             runCurrent() // make sure the events have emitted
             assertEquals("Bat", distributedMergeable.value.value)
-            distributedMergeable.close()
+            cancel()
         }.join()
     }
 
     @Test
     fun distributedUpdates() = runTest {
         launch {
-            val updates = MutableSharedFlow<Distributed<MergeableValue<String>>>()
+            val updates = MutableSharedFlow<DistributedMessage<MergeableValue<String>>>()
             val clientA = MergeableValue("Bar", Instant.fromEpochMilliseconds(0))
                 .distributeIn(updates = updates, scope = this)
             val clientB = MergeableValue("Baz", Instant.fromEpochMilliseconds(0))
@@ -71,9 +72,7 @@ class DistributedMergeableTests {
 
             assertEquals("Bat", clientA.value.value)
             assertEquals("Bat", clientB.value.value)
-
-            clientA.close()
-            clientB.close()
+            cancel()
         }.join()
     }
 }
