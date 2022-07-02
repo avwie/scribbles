@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Instant
-import nl.avwie.common.coroutines.DistributedMessage
 import nl.avwie.common.uuid
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -24,7 +23,7 @@ class DistributedMergeableTests {
 
     @Test
     fun incomingUpdates() = runTest {
-        val updates = MutableSharedFlow<DistributedMessage<MergeableValue<String>>>()
+        val updates = MutableSharedFlow<Update<MergeableValue<String>>>()
         val distributedMergeable = MergeableValue("Bar", Instant.fromEpochMilliseconds(0))
             .distributeIn(updates = updates, scope = this)
 
@@ -32,14 +31,14 @@ class DistributedMergeableTests {
 
         val otherSource = uuid()
         updates.emit(
-            DistributedMessage(
+            Update(
                 otherSource,
                 MergeableValue("Baz", Instant.fromEpochMilliseconds(1))
             )
         )
 
         updates.emit(
-            DistributedMessage(
+            Update(
                 otherSource,
                 MergeableValue("Bat", Instant.fromEpochMilliseconds(2))
             )
@@ -52,7 +51,7 @@ class DistributedMergeableTests {
 
     @Test
     fun distributedUpdates() = runTest {
-        val updates = MutableSharedFlow<DistributedMessage<MergeableValue<String>>>()
+        val updates = MutableSharedFlow<Update<MergeableValue<String>>>()
         val clientA = MergeableValue("Bar", Instant.fromEpochMilliseconds(0))
             .distributeIn(updates = updates, scope = this)
         val clientB = MergeableValue("Baz", Instant.fromEpochMilliseconds(0))
