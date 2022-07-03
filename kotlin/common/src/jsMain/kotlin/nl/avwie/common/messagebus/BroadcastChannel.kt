@@ -1,33 +1,29 @@
 package nl.avwie.common.messagebus
 
-import kotlinx.browser.window
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.launch
-import org.w3c.dom.set
-import kotlin.coroutines.EmptyCoroutineContext
+import org.w3c.dom.BroadcastChannel
 
-class BrowserLocalStorageMessageBus(
-    val topic: String,
-    private val scope: CoroutineScope = CoroutineScope(EmptyCoroutineContext)
-) : MessageBus<String> {
+fun BroadcastChannel.asMessageBus(
+    scope: CoroutineScope
+): MessageBus<String> = object : MessageBus<String> {
 
     private val _messages = MutableSharedFlow<String>()
     override val messages: SharedFlow<String> = _messages
 
     init {
-        window.onstorage = { event ->
-            event.newValue?.also { message ->
+        this@asMessageBus.onmessage = { event ->
+            (event.data as? String)?.also { data ->
                 scope.launch {
-                    _messages.emit(message)
+                    _messages.emit(data)
                 }
             }
         }
     }
 
     override suspend fun send(item: String) {
-        window.localStorage[topic] = item
-        _messages.emit(item)
+        this@asMessageBus.postMessage(item)
     }
 }

@@ -1,5 +1,9 @@
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import kotlinx.coroutines.CoroutineScope
+import nl.avwie.common.messagebus.asMessageBus
+import nl.avwie.common.messagebus.deserialize
 import nl.avwie.crdt.convergent.asStateFlow
 import nl.avwie.crdt.convergent.broadcast
 import nl.avwie.crdt.convergent.mergeableDistantPastValueOf
@@ -13,23 +17,24 @@ import kotlin.coroutines.EmptyCoroutineContext
 
 fun main() {
     val scope = CoroutineScope(EmptyCoroutineContext)
-    val channel = BroadcastChannel("updates")
+    val channel = BroadcastChannel("updates").asMessageBus(scope)
     val states = mergeableDistantPastValueOf(0).asStateFlow()
-    states.broadcast(channel, scope)
+    states.broadcast(channel.deserialize(scope), scope)
 
     renderComposable("root") {
-        val counter by states.collectAsState().value
+        val counter by states.collectAsState()
 
-        H1 { Text("Current value: $counter") }
-
-        Button(attrs = {
-            classes("btn", "btn-primary", "mx-2")
-            onClick { states.update { mergeableValueOf(it.value + 1) } }
-        }) { Text("Increase") }
-
-        Button(attrs = {
-            classes("btn", "btn-primary", "mx-2")
-            onClick { states.update { mergeableValueOf(it.value - 1) } }
-        }) { Text("Decrease") }
+        Header("Current value: ${counter.value}")
+        Button("Increase") { states.update { mergeableValueOf(it.value + 1) } }
+        Button("Decrease") { states.update { mergeableValueOf(it.value - 1) } }
     }
 }
+
+@Composable fun Header(title: String) = H1 { Text(title) }
+@Composable fun Button(label: String, onClick: () -> Unit) =
+    Button(
+        attrs = {
+            classes("btn", "btn-primary", "mx-2")
+            onClick { onClick() }
+        }
+    ) { Text(label) }
