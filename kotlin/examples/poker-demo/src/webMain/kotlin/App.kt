@@ -5,6 +5,7 @@ import nl.avwie.common.routing.BrowserHistory
 import kotlinx.browser.window
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -18,6 +19,7 @@ import org.jetbrains.compose.web.renderComposable
 import org.w3c.dom.BroadcastChannel
 import poker.routing.Routing
 import poker.sharedstate.RoomState
+import poker.util.collectAsState
 import poker.viewmodel.*
 import ui.*
 import kotlin.coroutines.EmptyCoroutineContext
@@ -57,7 +59,6 @@ fun main() {
     val id = uuid()
     val channel = BroadcastChannel("messaging")
     var i = 0
-
     channel.onmessage = { event -> console.log("Received: ${event.data}")}
 
     val scope = CoroutineScope(EmptyCoroutineContext)

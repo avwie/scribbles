@@ -2,11 +2,10 @@ import org.jetbrains.compose.compose
 
 plugins {
     kotlin("multiplatform")
-    kotlin("plugin.serialization")
     id("org.jetbrains.compose")
 }
 
-group = "nl.avwie.poker"
+group = "nl.avwie.crdt.demo"
 version = "1.0-SNAPSHOT"
 
 repositories {
@@ -16,21 +15,15 @@ repositories {
 }
 
 kotlin {
-    jvm()
 
-    js("web", IR) {
-        browser {
-            commonWebpackConfig {
-
-            }
-        }
+    js( IR) {
+        browser()
         binaries.executable()
     }
 
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation(Dependencies.KotlinXSerializationJson)
                 implementation(Dependencies.KotlinXCoroutinesCore)
                 implementation(project(":common"))
                 implementation(project(":crdt"))
@@ -43,7 +36,7 @@ kotlin {
             }
         }
 
-        val webMain by getting {
+        val jsMain by getting {
             dependencies {
                 implementation(compose.web.core)
             }
