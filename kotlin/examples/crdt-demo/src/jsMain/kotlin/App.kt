@@ -5,7 +5,7 @@ import kotlinx.coroutines.CoroutineScope
 import nl.avwie.common.messagebus.asMessageBus
 import nl.avwie.common.messagebus.deserialize
 import nl.avwie.crdt.convergent.asStateFlow
-import nl.avwie.crdt.convergent.broadcast
+import nl.avwie.crdt.convergent.sync
 import nl.avwie.crdt.convergent.mergeableDistantPastValueOf
 import nl.avwie.crdt.convergent.mergeableValueOf
 import org.jetbrains.compose.web.dom.Button
@@ -19,7 +19,7 @@ fun main() {
     val scope = CoroutineScope(EmptyCoroutineContext)
     val channel = BroadcastChannel("updates").asMessageBus(scope)
     val states = mergeableDistantPastValueOf(0).asStateFlow()
-    states.broadcast(channel.deserialize(scope), scope)
+    states.sync(channel.deserialize(scope), scope)
 
     renderComposable("root") {
         val counter by states.collectAsState()

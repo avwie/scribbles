@@ -24,11 +24,12 @@ private class MergeableStateFlowImpl<T : Mergeable<T>>(
 }
 
 fun <T : Mergeable<T>> T.asStateFlow(): MergeableStateFlow<T> = MergeableStateFlowImpl(MutableStateFlow(this))
+
 fun <T : Mergeable<T>> MergeableStateFlow<T>.mergeWith(other: MergeableStateFlow<T>, scope: CoroutineScope) {
     other.onEach { update -> this.merge(update) }.launchIn(scope)
 }
 
-fun <T: Mergeable<T>> MergeableStateFlow<T>.broadcast(
+fun <T: Mergeable<T>> MergeableStateFlow<T>.sync(
     messageBus: MessageBus<T>,
     scope: CoroutineScope
 ) {

@@ -63,9 +63,6 @@ class MergeableStateFlowTests {
         flowB.mergeWith(flowA, scope = this)
         runCurrent()
 
-        flowB.onEach { update -> flowA.merge(update) }.launchIn(scope = this)
-        runCurrent()
-
         assertEquals(flowA.value, flowB.value)
         assertEquals(1, flowA.value.value)
 
