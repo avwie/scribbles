@@ -32,7 +32,7 @@ fun <T : Mergeable<T>> MergeableStateFlow<T>.mergeWith(other: MergeableStateFlow
 fun <T: Mergeable<T>> MergeableStateFlow<T>.sync(
     messageBus: MessageBus<T>,
     scope: CoroutineScope
-) {
+): MergeableStateFlow<T> {
     this.onEach { update ->
         messageBus.send(update)
     }.launchIn(scope)
@@ -48,4 +48,6 @@ fun <T: Mergeable<T>> MergeableStateFlow<T>.sync(
     scope.launch {
         messageBus.send(value)
     }
+
+    return this
 }

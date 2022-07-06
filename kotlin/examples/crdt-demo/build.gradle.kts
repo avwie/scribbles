@@ -3,6 +3,7 @@ import org.jetbrains.compose.compose
 plugins {
     kotlin("multiplatform")
     id("org.jetbrains.compose")
+    kotlin("plugin.serialization")
 }
 
 group = "nl.avwie.crdt.demo"
@@ -24,6 +25,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
+                implementation(Dependencies.KotlinXSerializationCore)
                 implementation(Dependencies.KotlinXCoroutinesCore)
                 implementation(project(":common"))
                 implementation(project(":crdt"))

@@ -1,5 +1,6 @@
 import nl.avwie.crdt.convergent.*
 
+@kotlinx.serialization.Serializable
 data class TodoList(
     private val _name: MergeableValue<String>,
     private val _items: MergeableMap<String, Boolean>
