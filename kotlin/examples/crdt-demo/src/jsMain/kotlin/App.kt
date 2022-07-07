@@ -8,10 +8,10 @@ import nl.avwie.common.messagebus.deserialize
 import nl.avwie.crdt.convergent.MergeableStateFlow
 import nl.avwie.crdt.convergent.asStateFlow
 import nl.avwie.crdt.convergent.sync
-import org.jetbrains.compose.web.dom.H1
-import org.jetbrains.compose.web.dom.Text
+import org.jetbrains.compose.web.dom.*
 import org.jetbrains.compose.web.renderComposable
 import org.w3c.dom.BroadcastChannel
+import org.w3c.dom.Element
 
 fun main() {
     val scope = CoroutineScope(Dispatchers.Default)
@@ -26,7 +26,21 @@ fun main() {
 
     val todoListFlow = TodoList("New list").asStateFlow().sync(channel, scope)
     renderComposable("root") {
-        App(todoListFlow)
+        Centered {
+            App(todoListFlow)
+        }
+    }
+}
+
+@Composable fun Centered(content: @Composable DOMScope<Element>.() -> Unit) {
+    Div(attrs = {
+        classes("vw-100", "vh-100", "d-flex", "align-items-center", "justify-content-center")
+    }) {
+        Div(attrs = {
+            classes("shadow", "rounded", "p-2")
+        }) {
+            content()
+        }
     }
 }
 
@@ -39,7 +53,7 @@ fun main() {
 }
 
 @Composable fun Title(value: String) {
-    H1({ classes("text-primary") }) { Text(value) }
+    P ({ classes("fs-3", "text-primary") }) { Text(value) }
 }
 
 @Composable fun Button(label: String, onClick: () -> Unit = {}) {
