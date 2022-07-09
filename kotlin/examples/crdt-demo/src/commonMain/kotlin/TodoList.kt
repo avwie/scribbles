@@ -12,7 +12,7 @@ data class TodoList(
     val items: Map<String, Boolean> = _items
 
     fun setName(name: String): TodoList = copy(
-            _name = mergeableValueOf(name)
+        _name = mergeableValueOf(name)
     )
 
     fun addItem(item: String): TodoList = copy(

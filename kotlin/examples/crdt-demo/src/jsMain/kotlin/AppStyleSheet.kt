@@ -42,6 +42,11 @@ object AppStyleSheet : StyleSheet() {
         flexDirection(FlexDirection.Column)
     }
 
+    val colContainer by style {
+        display(DisplayStyle.Flex)
+        flexDirection(FlexDirection.Row)
+    }
+
     val responsiveInput by style {
         borderWidth(0.px, 0.px, 2.px, 0.px)
         property("border-color", transparent.toString())
@@ -63,5 +68,19 @@ object AppStyleSheet : StyleSheet() {
 
         property("transition-property", "all")
         property("transition-duration", "0.5s")
+    }
+
+    val separator by style {
+        boxSizing("border-box")
+        overflow("visible")
+        height(2.px)
+        property("margin", "2px 0px")
+        property("border-width", "0")
+        property("background-color", darkGrey.toString())
+    }
+
+    val item by style {
+        padding(0.5.em)
+        margin(0.5.em)
     }
 }

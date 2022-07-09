@@ -9,6 +9,10 @@ import nl.avwie.crdt.convergent.MergeableStateFlow
 import nl.avwie.crdt.convergent.asStateFlow
 import nl.avwie.crdt.convergent.sync
 import org.jetbrains.compose.web.css.Style
+import org.jetbrains.compose.web.css.em
+import org.jetbrains.compose.web.css.fontSize
+import org.jetbrains.compose.web.css.fontWeight
+import org.jetbrains.compose.web.dom.P
 import org.jetbrains.compose.web.dom.Text
 import org.jetbrains.compose.web.renderComposable
 import org.w3c.dom.BroadcastChannel
@@ -24,7 +28,10 @@ fun main() {
         }
         .deserialize<TodoList>(scope)
 
-    val todoListFlow = TodoList("New list").asStateFlow().sync(channel, scope)
+    val todoListFlow = TodoList("New list")
+        .addItem("Foo")
+        .addItem("Bar")
+        .asStateFlow().sync(channel, scope)
     renderComposable("root") {
         Style(AppStyleSheet)
         FullPageCentered {
@@ -38,7 +45,19 @@ fun main() {
     val (todoList, updateTodoList) = remember { todoListFlow.collectAsMutableState(scope) }
 
     RowContainer {
-        Input(todoList.name, onInputChange = { title -> updateTodoList { it.setName(title) } })
+        Input(todoList.name,
+            placeholder = "Enter your list name and press enter...",
+            onSubmit = { title -> updateTodoList { it.setName(title) }},
+            attrs = { style { fontWeight(600) }}
+        )
+        Separator()
+        Items(todoList.items.keys)
+        Separator()
+        Input("",
+            placeholder = "Enter new item and press enter...",
+            onSubmit = { item -> updateTodoList { it.addItem(item) }},
+            resetAfterSubmit = true
+        )
     }
 }
 

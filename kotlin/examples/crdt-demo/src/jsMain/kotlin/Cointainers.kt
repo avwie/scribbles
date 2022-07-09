@@ -18,3 +18,10 @@ fun RowContainer(content: @Composable DOMScope<Element>.() -> Unit) {
         content()
     }
 }
+
+@Composable
+fun ColContainer(content: @Composable DOMScope<Element>.() -> Unit) {
+    Div(attrs = { classes(AppStyleSheet.colContainer) }) {
+        content()
+    }
+}
