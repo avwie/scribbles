@@ -24,6 +24,10 @@ data class TodoList(
     )
 
     fun finishItem(item: String): TodoList = copy(
+        _items = if (_items.containsKey(item)) _items.put(item, true) else _items
+    )
+
+    fun unfinishItem(item: String): TodoList = copy(
         _items = if (_items.containsKey(item)) _items.put(item, false) else _items
     )
 

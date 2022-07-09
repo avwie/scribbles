@@ -3,9 +3,7 @@ import org.jetbrains.compose.web.attributes.InputType
 import org.jetbrains.compose.web.attributes.builders.InputAttrsScope
 import org.jetbrains.compose.web.attributes.placeholder
 import org.jetbrains.compose.web.attributes.readOnly
-import org.jetbrains.compose.web.dom.Div
-import org.jetbrains.compose.web.dom.Hr
-import org.jetbrains.compose.web.dom.Text
+import org.jetbrains.compose.web.dom.*
 import org.w3c.dom.HTMLInputElement
 
 @Composable fun Input(
@@ -71,15 +69,54 @@ import org.w3c.dom.HTMLInputElement
     Hr(attrs = { classes(AppStyleSheet.separator) })
 }
 
-@Composable fun Items(items: Iterable<String>) {
-    items.forEachIndexed { index, item ->
-        Item(item, index == items.count() - 1)
+@Composable fun Items(
+    items: Map<String, Boolean>,
+    onItemChecked: (item: String, value: Boolean) -> Unit = { _, _ -> },
+    onItemDeleted: (item: String) -> Unit = {}
+) {
+    items.keys.forEachIndexed { index, item ->
+        Item(
+            item,
+            isFinished = items[item]!!,
+            isLast = index == items.count() - 1,
+            onItemChecked=onItemChecked,
+            onItemDeleted=onItemDeleted
+        )
     }
 }
 
-@Composable fun Item(item: String, isLast: Boolean = false) {
+@Composable fun Item(
+    item: String,
+    isFinished: Boolean,
+    isLast: Boolean = false,
+    onItemChecked: (item: String, value: Boolean) -> Unit = { _, _ -> },
+    onItemDeleted: (item: String) -> Unit = {}
+) {
     Div(attrs = { classes(AppStyleSheet.item) }) {
-        Text(item)
+        ColContainer {
+            Span(attrs = {
+                classes("material-symbols-outlined")
+                onClick {
+                    onItemChecked(item, !isFinished)
+                }
+            }) {
+                if (isFinished) Text("check_box")
+                else Text("check_box_outline_blank")
+            }
+            P(attrs = {
+                if (isFinished) classes(AppStyleSheet.finished)
+            }) {
+                Text(item)
+            }
+            Span(attrs = {
+                classes("material-symbols-outlined")
+                onClick {
+                    onItemDeleted(item)
+                }
+            }) {
+                Text("delete")
+            }
+        }
     }
     if (!isLast) {
         Separator()

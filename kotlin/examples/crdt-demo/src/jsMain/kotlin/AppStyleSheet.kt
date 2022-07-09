@@ -82,5 +82,24 @@ object AppStyleSheet : StyleSheet() {
     val item by style {
         padding(0.5.em)
         margin(0.5.em)
+
+        ".$colContainer" style {
+            alignItems(AlignItems.Center)
+        }
+
+        "span" style {
+            cursor("pointer")
+        }
+
+        "p" style {
+            flexGrow(1)
+            property("margin", "0 0 0 0.5em")
+            property("margin-block-start", "0")
+            property("margin-block-end", "0")
+        }
+    }
+
+    val finished by style {
+        textDecoration("line-through")
     }
 }

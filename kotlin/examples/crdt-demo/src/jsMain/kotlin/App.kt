@@ -51,7 +51,16 @@ fun main() {
             attrs = { style { fontWeight(600) }}
         )
         Separator()
-        Items(todoList.items.keys)
+        Items(
+            items = todoList.items,
+            onItemChecked = { item, value ->
+                updateTodoList {
+                    if (value) it.finishItem(item)
+                    else it.unfinishItem(item)
+                }
+            },
+            onItemDeleted = { item -> updateTodoList{ it.removeItem(item) }}
+        )
         Separator()
         Input("",
             placeholder = "Enter new item and press enter...",
