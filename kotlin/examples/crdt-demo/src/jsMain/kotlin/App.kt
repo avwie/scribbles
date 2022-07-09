@@ -8,6 +8,8 @@ import nl.avwie.common.messagebus.deserialize
 import nl.avwie.crdt.convergent.MergeableStateFlow
 import nl.avwie.crdt.convergent.asStateFlow
 import nl.avwie.crdt.convergent.sync
+import org.jetbrains.compose.web.css.Style
+import org.jetbrains.compose.web.dom.Text
 import org.jetbrains.compose.web.renderComposable
 import org.w3c.dom.BroadcastChannel
 
@@ -24,10 +26,9 @@ fun main() {
 
     val todoListFlow = TodoList("New list").asStateFlow().sync(channel, scope)
     renderComposable("root") {
-        Centered {
-            ResponsiveContainer {
-                App(todoListFlow)
-            }
+        Style(AppStyleSheet)
+        FullPageCentered {
+            App(todoListFlow)
         }
     }
 }
@@ -36,10 +37,8 @@ fun main() {
     val scope = rememberCoroutineScope()
     val (todoList, updateTodoList) = remember { todoListFlow.collectAsMutableState(scope) }
 
-    Row {
-        Col(12) {
-            EditableTitle(todoList.name, onTitleUpdate = { title -> updateTodoList { it.setName(title) } })
-        }
+    RowContainer {
+        Input(todoList.name, onInputChange = { title -> updateTodoList { it.setName(title) } })
     }
 }
 
