@@ -27,6 +27,7 @@ import org.w3c.dom.HTMLInputElement
 
             it.target == nativeElement.value && !editMode -> {
                 editMode = true
+                nativeElement.value?.select()
             }
         }
     }

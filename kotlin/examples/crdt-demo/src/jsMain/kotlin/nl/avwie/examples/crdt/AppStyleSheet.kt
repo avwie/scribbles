@@ -41,8 +41,6 @@ object AppStyleSheet : StyleSheet() {
 
     val nameInput by style {
         fontWeight(600)
-        color(white)
-        backgroundColor(blue)
     }
 
     val mainPanel by style {

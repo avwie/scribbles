@@ -64,6 +64,7 @@ val jvmJar by tasks.existing
 val jvmRuntimeClasspath by configurations.existing
 
 tasks.register<JavaExec>("runServer") {
+    dependsOn("jsBrowserDistribution")
     description = "Run the server"
     group = ApplicationPlugin.APPLICATION_GROUP
     classpath(jvmJar, jvmRuntimeClasspath)

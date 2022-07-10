@@ -3,6 +3,7 @@ package nl.avwie.examples.crdt
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
+import io.ktor.server.http.content.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.callloging.*
 import io.ktor.server.plugins.cors.routing.*
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.forEach
 import nl.avwie.common.uuid
 import org.slf4j.LoggerFactory
+import java.io.File
 import java.net.SocketException
 import java.util.logging.Logger
 
@@ -26,14 +28,18 @@ fun main() {
     val stream = MutableSharedFlow<String>()
     val logger = LoggerFactory.getLogger("Main")
 
+    logger.info("Working dir: ${System.getProperty("user.dir")}")
+
     embeddedServer(Netty, port = 8080, host = "0.0.0.0") {
         install(CallLogging)
         install(CORS) {
             allowHost("*")
         }
         routing {
-            get("/") {
-                call.respondText("Welcome to the CRDT server")
+            static("/") {
+                staticRootFolder = File("./build/distributions")
+                file("", "index.html")
+                files(".")
             }
 
             post("/publish") {

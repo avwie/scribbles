@@ -26,7 +26,7 @@ fun main() {
     val channel = sseBus
         .also { jsonBus ->
             jsonBus.messages.onEach {
-                console.log(it)
+                console.log("Received: ", it)
             }.launchIn(scope)
         }
         .deserialize<TodoList>(scope)
@@ -54,7 +54,7 @@ fun main() {
                 Input(todoList.name,
                     placeholder = "Enter your list name and press enter...",
                     onSubmit = { title -> updateTodoList { it.setName(title) } },
-                    attrs = { classes(AppStyleSheet.radiusTop) }
+                    attrs = { classes(AppStyleSheet.radiusTop, AppStyleSheet.nameInput) }
                 )
                 Separator()
                 Items(
