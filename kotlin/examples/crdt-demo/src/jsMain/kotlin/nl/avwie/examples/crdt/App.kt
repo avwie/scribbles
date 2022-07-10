@@ -17,9 +17,6 @@ import org.w3c.dom.BroadcastChannel
 
 fun main() {
     val scope = CoroutineScope(Dispatchers.Default)
-    /*val broadcastBus = BroadcastChannel("updates")
-        .asMessageBus(scope)*/
-
     val sseBus = ServerSentEventBus(
         publishEndpoint = "http://localhost:8080/publish",
         subscribeEndpoint = "http://localhost:8080/subscribe",

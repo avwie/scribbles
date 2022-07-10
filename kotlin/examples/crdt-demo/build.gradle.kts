@@ -18,6 +18,7 @@ repositories {
 kotlin {
 
     jvm {
+        withJava()
     }
 
     js(IR) {
@@ -57,4 +58,14 @@ kotlin {
             }
         }
     }
+}
+
+val jvmJar by tasks.existing
+val jvmRuntimeClasspath by configurations.existing
+
+tasks.register<JavaExec>("runServer") {
+    description = "Run the server"
+    group = ApplicationPlugin.APPLICATION_GROUP
+    classpath(jvmJar, jvmRuntimeClasspath)
+    mainClass.set("nl.avwie.examples.crdt.ApplicationKt")
 }
