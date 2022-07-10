@@ -1,3 +1,5 @@
+package nl.avwie.examples.crdt
+
 import nl.avwie.crdt.convergent.*
 
 @kotlinx.serialization.Serializable

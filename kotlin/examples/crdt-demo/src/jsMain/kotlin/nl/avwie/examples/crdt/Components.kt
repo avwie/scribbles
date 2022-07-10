@@ -1,3 +1,5 @@
+package nl.avwie.examples.crdt
+
 import androidx.compose.runtime.*
 import org.jetbrains.compose.web.attributes.InputType
 import org.jetbrains.compose.web.attributes.builders.InputAttrsScope

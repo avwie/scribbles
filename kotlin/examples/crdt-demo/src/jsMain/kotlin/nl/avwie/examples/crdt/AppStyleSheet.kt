@@ -1,8 +1,10 @@
-import AppStyleSheet.Colors.blue
-import AppStyleSheet.Colors.darkGrey
-import AppStyleSheet.Colors.grey
-import AppStyleSheet.Colors.transparent
-import AppStyleSheet.Colors.white
+package nl.avwie.examples.crdt
+
+import nl.avwie.examples.crdt.AppStyleSheet.Colors.blue
+import nl.avwie.examples.crdt.AppStyleSheet.Colors.darkGrey
+import nl.avwie.examples.crdt.AppStyleSheet.Colors.grey
+import nl.avwie.examples.crdt.AppStyleSheet.Colors.transparent
+import nl.avwie.examples.crdt.AppStyleSheet.Colors.white
 import org.jetbrains.compose.web.css.*
 
 object AppStyleSheet : StyleSheet() {

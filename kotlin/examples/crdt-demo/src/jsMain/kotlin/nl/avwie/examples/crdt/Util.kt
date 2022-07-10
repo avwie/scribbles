@@ -1,3 +1,5 @@
+package nl.avwie.examples.crdt
+
 import androidx.compose.runtime.*
 import kotlinx.browser.document
 import kotlinx.coroutines.CoroutineScope

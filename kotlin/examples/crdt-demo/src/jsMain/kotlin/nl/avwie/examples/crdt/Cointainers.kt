@@ -1,3 +1,5 @@
+package nl.avwie.examples.crdt
+
 import androidx.compose.runtime.Composable
 import org.jetbrains.compose.web.dom.DOMScope
 import org.jetbrains.compose.web.dom.Div

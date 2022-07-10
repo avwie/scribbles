@@ -1,0 +1,11 @@
+### Health
+GET localhost:8080
+
+### Subscribe
+GET localhost:8080/subscribe
+
+### Publish
+POST localhost:8080/publish
+Content-Type: application/json
+
+{"foo": "bar"}

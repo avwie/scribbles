@@ -25,7 +25,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(Dependencies.KotlinXCoroutinesCore)
-                implementation(Dependencies.Ktor)
+                implementation(Dependencies.KtorClientCore)
                 implementation(project(":common"))
                 implementation(compose.runtime)
             }

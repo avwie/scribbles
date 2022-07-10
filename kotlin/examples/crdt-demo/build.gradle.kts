@@ -17,7 +17,10 @@ repositories {
 
 kotlin {
 
-    js( IR) {
+    jvm {
+    }
+
+    js(IR) {
         browser()
         binaries.executable()
     }
@@ -35,6 +38,16 @@ kotlin {
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
+            }
+        }
+
+        val jvmMain by getting {
+            dependencies {
+                implementation(Dependencies.KtorServerCore)
+                implementation(Dependencies.KtorServerNetty)
+                implementation(Dependencies.KtorServerCallLogging)
+                implementation(Dependencies.KtorServerCors)
+                implementation(Dependencies.LogBackClassic)
             }
         }
 

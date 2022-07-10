@@ -12,6 +12,13 @@ object Dependencies {
     val KotlinXDateTime = "org.jetbrains.kotlinx:kotlinx-datetime:${Versions.KotlinXDateTime}"
     val KotlinXImmutableCollections = "org.jetbrains.kotlinx:kotlinx-collections-immutable:${Versions.KotlinXImmutableCollections}"
 
-    val Ktor = "io.ktor:ktor-client-core:${Versions.Ktor}"
+    val KtorClientCore = "io.ktor:ktor-client-core:${Versions.Ktor}"
     val KtorClientJs = "io.ktor:ktor-client-js:${Versions.Ktor}"
+
+    val KtorServerCore = "io.ktor:ktor-server-core:${Versions.Ktor}"
+    val KtorServerNetty = "io.ktor:ktor-server-netty:${Versions.Ktor}"
+    val KtorServerCallLogging = "io.ktor:ktor-server-call-logging:${Versions.Ktor}"
+    val KtorServerCors = "io.ktor:ktor-server-cors:${Versions.Ktor}"
+
+    val LogBackClassic = "ch.qos.logback:logback-classic:${Versions.Logback}"
 }

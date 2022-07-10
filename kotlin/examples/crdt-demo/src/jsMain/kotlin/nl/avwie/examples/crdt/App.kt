@@ -1,26 +1,32 @@
+package nl.avwie.examples.crdt
+
 import androidx.compose.runtime.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import nl.avwie.common.messagebus.ServerSentEventBus
 import nl.avwie.common.messagebus.asMessageBus
 import nl.avwie.common.messagebus.deserialize
 import nl.avwie.crdt.convergent.MergeableStateFlow
 import nl.avwie.crdt.convergent.asStateFlow
 import nl.avwie.crdt.convergent.sync
 import org.jetbrains.compose.web.css.Style
-import org.jetbrains.compose.web.css.em
-import org.jetbrains.compose.web.css.fontSize
-import org.jetbrains.compose.web.css.fontWeight
-import org.jetbrains.compose.web.dom.P
-import org.jetbrains.compose.web.dom.Text
 import org.jetbrains.compose.web.renderComposable
 import org.w3c.dom.BroadcastChannel
 
 fun main() {
     val scope = CoroutineScope(Dispatchers.Default)
-    val channel = BroadcastChannel("updates")
-        .asMessageBus(scope)
+    /*val broadcastBus = BroadcastChannel("updates")
+        .asMessageBus(scope)*/
+
+    val sseBus = ServerSentEventBus(
+        publishEndpoint = "http://localhost:8080/publish",
+        subscribeEndpoint = "http://localhost:8080/subscribe",
+        scope = scope
+    )
+
+    val channel = sseBus
         .also { jsonBus ->
             jsonBus.messages.onEach {
                 console.log(it)

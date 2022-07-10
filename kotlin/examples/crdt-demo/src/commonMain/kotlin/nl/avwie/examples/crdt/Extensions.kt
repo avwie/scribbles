@@ -1,3 +1,5 @@
+package nl.avwie.examples.crdt
+
 import androidx.compose.runtime.mutableStateOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.launchIn
