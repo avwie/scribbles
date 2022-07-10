@@ -2,6 +2,7 @@ import AppStyleSheet.Colors.blue
 import AppStyleSheet.Colors.darkGrey
 import AppStyleSheet.Colors.grey
 import AppStyleSheet.Colors.transparent
+import AppStyleSheet.Colors.white
 import org.jetbrains.compose.web.css.*
 
 object AppStyleSheet : StyleSheet() {
@@ -11,6 +12,7 @@ object AppStyleSheet : StyleSheet() {
         val darkGrey = rgb(220, 220, 220)
         val blue = rgb(52, 128, 235)
         val transparent = rgba(255, 255, 255, 255)
+        val white = rgb(240, 240, 240)
     }
 
     init {
@@ -29,6 +31,16 @@ object AppStyleSheet : StyleSheet() {
         display(DisplayStyle.Flex)
         alignItems(AlignItems.Center)
         justifyContent(JustifyContent.Center)
+    }
+
+    val title by style {
+        textAlign("center")
+    }
+
+    val nameInput by style {
+        fontWeight(600)
+        color(white)
+        backgroundColor(blue)
     }
 
     val mainPanel by style {
@@ -50,9 +62,7 @@ object AppStyleSheet : StyleSheet() {
     val responsiveInput by style {
         borderWidth(0.px, 0.px, 2.px, 0.px)
         property("border-color", transparent.toString())
-        borderRadius(0.5.em)
-        padding(0.5.em)
-        margin(0.5.em)
+        padding(1.0.em)
         fontSize(1.0.cssRem)
 
         self + hover style {
@@ -101,5 +111,13 @@ object AppStyleSheet : StyleSheet() {
 
     val finished by style {
         textDecoration("line-through")
+    }
+
+    val radiusTop by style {
+        borderRadius(0.5.em, 0.5.em, 0.em, 0.em)
+    }
+
+    val radiusBottom by style {
+        borderRadius(0.em, 0.em, 0.5.em, 0.em)
     }
 }

@@ -122,3 +122,7 @@ import org.w3c.dom.HTMLInputElement
         Separator()
     }
 }
+
+@Composable fun Title(title: String) {
+    H1(attrs = { classes(AppStyleSheet.title) }) { Text(title) }
+}

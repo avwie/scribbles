@@ -40,7 +40,7 @@ fun <T: Mergeable<T>> MergeableStateFlow<T>.sync(
     messageBus.messages.onEach { update ->
         val merged = this.merge(update)
         if (merged != update) {
-            messageBus.send(update)
+            messageBus.send(merged)
         }
     }.launchIn(scope)
 

@@ -6,7 +6,7 @@ data class TodoList(
     private val _items: MergeableMap<String, Boolean>
 ) : Mergeable<TodoList>  {
 
-    constructor(name: String) : this(mergeableValueOf(name), mergeableMapOf())
+    constructor(name: String) : this(mergeableDistantPastValueOf(name), mergeableMapOf())
 
     val name: String by _name
     val items: Map<String, Boolean> = _items

@@ -6,9 +6,13 @@ import org.w3c.dom.Element
 @Composable
 fun FullPageCentered(content: @Composable DOMScope<Element>.() -> Unit) {
     Div(attrs = {classes(AppStyleSheet.fullPageCentered) }) {
-        Div(attrs = { classes(AppStyleSheet.mainPanel) }) {
-            content()
-        }
+        content()
+    }
+}
+
+@Composable fun MainPanel(content: @Composable DOMScope<Element>.() -> Unit) {
+    Div(attrs = { classes(AppStyleSheet.mainPanel) }) {
+        content()
     }
 }
 

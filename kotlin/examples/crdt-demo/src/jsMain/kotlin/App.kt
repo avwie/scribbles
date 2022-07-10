@@ -29,9 +29,9 @@ fun main() {
         .deserialize<TodoList>(scope)
 
     val todoListFlow = TodoList("New list")
-        .addItem("Foo")
-        .addItem("Bar")
-        .asStateFlow().sync(channel, scope)
+        .asStateFlow()
+        .sync(channel, scope)
+
     renderComposable("root") {
         Style(AppStyleSheet)
         FullPageCentered {
@@ -45,28 +45,37 @@ fun main() {
     val (todoList, updateTodoList) = remember { todoListFlow.collectAsMutableState(scope) }
 
     RowContainer {
-        Input(todoList.name,
-            placeholder = "Enter your list name and press enter...",
-            onSubmit = { title -> updateTodoList { it.setName(title) }},
-            attrs = { style { fontWeight(600) }}
-        )
-        Separator()
-        Items(
-            items = todoList.items,
-            onItemChecked = { item, value ->
-                updateTodoList {
-                    if (value) it.finishItem(item)
-                    else it.unfinishItem(item)
+        Title("Todo List")
+        MainPanel {
+            RowContainer {
+                Input(todoList.name,
+                    placeholder = "Enter your list name and press enter...",
+                    onSubmit = { title -> updateTodoList { it.setName(title) } },
+                    attrs = { classes(AppStyleSheet.radiusTop) }
+                )
+                Separator()
+                Items(
+                    items = todoList.items,
+                    onItemChecked = { item, value ->
+                        updateTodoList {
+                            if (value) it.finishItem(item)
+                            else it.unfinishItem(item)
+                        }
+                    },
+                    onItemDeleted = { item -> updateTodoList { it.removeItem(item) } }
+                )
+                if (todoList.items.isNotEmpty()) {
+                    Separator()
                 }
-            },
-            onItemDeleted = { item -> updateTodoList{ it.removeItem(item) }}
-        )
-        Separator()
-        Input("",
-            placeholder = "Enter new item and press enter...",
-            onSubmit = { item -> updateTodoList { it.addItem(item) }},
-            resetAfterSubmit = true
-        )
+                Input(
+                    "",
+                    placeholder = "Enter new item and press enter...",
+                    onSubmit = { item -> updateTodoList { it.addItem(item) } },
+                    resetAfterSubmit = true,
+                    attrs = { classes( AppStyleSheet.radiusBottom) }
+                )
+            }
+        }
     }
 }
 
