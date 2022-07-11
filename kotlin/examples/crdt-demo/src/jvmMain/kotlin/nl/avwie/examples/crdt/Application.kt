@@ -26,11 +26,7 @@ import java.util.logging.Logger
 
 fun main() {
     val stream = MutableSharedFlow<String>()
-    val logger = LoggerFactory.getLogger("Main")
-
-    logger.info("Working dir: ${System.getProperty("user.dir")}")
-
-    embeddedServer(Netty, port = 8080, host = "0.0.0.0") {
+    embeddedServer(Netty, port = 8080, host = "localhost") {
         install(CallLogging)
         install(CORS) {
             allowHost("*")
@@ -49,24 +45,17 @@ fun main() {
             }
 
             get("/subscribe") {
-                logger.info("Subscriber subscribed!x")
-                coroutineScope {
-                    call.respondServerSentEvent(stream)
+                call.response.cacheControl(CacheControl.NoCache(null))
+                call.respondTextWriter(contentType = ContentType.Text.EventStream) {
+                    stream.collect {
+                        write("id:${uuid()}\n")
+                        write("event:message\n")
+                        write("data:$it\n")
+                        write("\n")
+                        flush()
+                    }
                 }
             }
         }
     }.start(wait = true)
-}
-
-suspend fun ApplicationCall.respondServerSentEvent(events: SharedFlow<String>) {
-    response.cacheControl(CacheControl.NoCache(null))
-    respondTextWriter(contentType = ContentType.Text.EventStream) {
-        events.collect {
-            write("id:${uuid()}\n")
-            write("event:message\n")
-            write("data:$it\n")
-            write("\n")
-            flush()
-        }
-    }
 }
