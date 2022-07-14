@@ -1,6 +1,8 @@
 package nl.avwie.examples.crdt
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -11,7 +13,7 @@ interface MutableMergeableStateFlow<T : Mergeable<T>> {
     val value: T
 
     operator fun component1(): T
-    operator fun component2(): ((T) -> T) -> Unit
+    operator fun component2(): (T) -> Unit
 }
 
 fun <T : Mergeable<T>> MergeableStateFlow<T>.collectAsMutableState(
@@ -33,7 +35,7 @@ fun <T : Mergeable<T>> MergeableStateFlow<T>.collectAsMutableState(
         return internalState.value
     }
 
-    override fun component2(): ((T) -> T) -> Unit {
-        return { updater -> this@collectAsMutableState.update(updater) }
+    override fun component2(): (T) -> Unit {
+        return { newValue -> update { newValue }}
     }
 }

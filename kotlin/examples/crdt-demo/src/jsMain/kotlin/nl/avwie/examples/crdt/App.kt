@@ -21,7 +21,7 @@ fun main() {
         scope = scope
     )
 
-    val channel = sseBus
+    val bus = sseBus
         .also { jsonBus ->
             jsonBus.messages.onEach {
                 console.log("Received: ", it)
@@ -31,7 +31,7 @@ fun main() {
 
     val todoListFlow = TodoList("New list")
         .asStateFlow()
-        .sync(channel, scope)
+        .sync(bus, scope)
 
     renderComposable("root") {
         Style(AppStyleSheet)
@@ -51,19 +51,17 @@ fun main() {
             RowContainer {
                 FancyInput(todoList.name,
                     placeholder = "Enter your list name and press enter...",
-                    onSubmit = { title -> updateTodoList { it.setName(title) } },
+                    onSubmit = { title -> updateTodoList(todoList.setName(title)) },
                     attrs = { classes(AppStyleSheet.radiusTop, AppStyleSheet.nameInput) }
                 )
                 Separator()
                 Items(
                     items = todoList.items,
                     onItemChecked = { item, value ->
-                        updateTodoList {
-                            if (value) it.finishItem(item)
-                            else it.unfinishItem(item)
-                        }
+                        if (value) updateTodoList(todoList.finishItem(item))
+                        else updateTodoList(todoList.unfinishItem(item))
                     },
-                    onItemDeleted = { item -> updateTodoList { it.removeItem(item) } }
+                    onItemDeleted = { item -> updateTodoList(todoList.removeItem(item)) }
                 )
                 if (todoList.items.isNotEmpty()) {
                     Separator()
@@ -71,7 +69,7 @@ fun main() {
                 FancyInput(
                     "",
                     placeholder = "Enter new item and press enter...",
-                    onSubmit = { item -> updateTodoList { it.addItem(item) } },
+                    onSubmit = { item -> updateTodoList(todoList.addItem(item)) },
                     resetAfterSubmit = true,
                     attrs = { classes( AppStyleSheet.radiusBottom) }
                 )

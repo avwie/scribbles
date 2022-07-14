@@ -2,12 +2,14 @@ package nl.avwie.crdt.convergent
 
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import kotlin.random.Random
 import kotlin.reflect.KProperty
 
 @kotlinx.serialization.Serializable
 class MergeableValue<T>(
     val value: T,
-    val timestamp: Instant
+    val timestamp: Instant,
+    val discriminant: Int = Random.nextInt(),
 ) : Mergeable<MergeableValue<T>> {
 
     operator fun getValue(thisRef: Any?, property: KProperty<*>): T {
@@ -18,8 +20,8 @@ class MergeableValue<T>(
         timestamp < other.timestamp -> other
         timestamp > other.timestamp -> this
 
-        // breaking ties based on hash
-        hashCode() <  other.hashCode() -> other
+        // breaking ties based on discriminant
+        discriminant <  other.discriminant -> other
         else -> this
     }
 
