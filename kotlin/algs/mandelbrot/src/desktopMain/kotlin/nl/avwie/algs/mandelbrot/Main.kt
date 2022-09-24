@@ -1,5 +1,9 @@
 package nl.avwie.algs.mandelbrot
 
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.WindowState
@@ -10,11 +14,23 @@ fun main() = singleWindowApplication(
     title = "Mandelbrot",
     state = WindowState(size = DpSize(640.dp, 480.dp))
 ) {
+    var x by remember { mutableStateOf(-1.2) }
+    var y by remember { mutableStateOf(-0.31) }
+    var scale by remember { mutableStateOf(0.1) }
+
     MandelbrotViewer(
         limit = 512,
-        x = -1.2,
-        y = -0.31,
-        xScale = 0.1,
-        colorMap = ColorMap.Plasma
+        x = x,
+        y = y,
+        xScale = scale,
+        colorMap = ColorMap.Plasma,
+        onClick = { x1, y1 ->
+            x = x1
+            y = y1
+        },
+        onZoomIn = {
+            scale /= 2
+       },
+        onZoomOut = { scale *= 2 }
     )
 }

@@ -18,6 +18,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
+                implementation("org.jetbrains.skiko:skiko:0.7.27")
                 implementation(compose.ui)
                 implementation(compose.foundation)
                 implementation(compose.material)
