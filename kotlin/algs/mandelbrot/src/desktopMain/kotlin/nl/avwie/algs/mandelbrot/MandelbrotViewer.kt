@@ -33,21 +33,30 @@ import nl.avwie.common.ColorMap
     onZoomIn: () -> Unit = {},
     onZoomOut: () -> Unit = {}
 )  {
-    Column {
-        var canvasWidth by remember { mutableStateOf(0) }
-        var canvasHeight by remember { mutableStateOf(0) }
-        val options by derivedStateOf {
-            MandelbrotMap.Options.fromViewport(
-                canvasWidth,
-                canvasHeight,
-                x,
-                y,
-                xScale,
-                limit
-            )
-        }
+    var canvasWidth by remember { mutableStateOf(1) }
+    var canvasHeight by remember { mutableStateOf(1) }
 
-        val requester = remember { FocusRequester() }
+    val options =  MandelbrotMap.Options.fromViewport(
+        canvasWidth,
+        canvasHeight,
+        x,
+        y,
+        xScale,
+        limit
+    )
+    var map: MandelbrotMap? by remember { mutableStateOf(null) }
+
+    val requester = remember { FocusRequester() }
+
+    LaunchedEffect(Unit) {
+        requester.requestFocus()
+    }
+
+    LaunchedEffect(options) {
+        map = MandelbrotMap.parallel(options)
+    }
+
+    Column {
         Canvas(modifier = Modifier
             .fillMaxSize()
             .focusRequester(requester)
@@ -67,16 +76,12 @@ import nl.avwie.common.ColorMap
         ) {
             canvasWidth = (size.width / density).toInt()
             canvasHeight = (size.height / density).toInt()
-
-            val result by derivedStateOf { MandelbrotMap(options) }
-            drawImage(
-                image = result.asBitmap(colorMap).asComposeImageBitmap(),
-                dstSize = IntSize(size.width.toInt(), size.height.toInt())
-            )
-        }
-
-        LaunchedEffect(Unit) {
-            requester.requestFocus()
+            if (map != null) {
+                drawImage(
+                    image = map!!.asBitmap(colorMap).asComposeImageBitmap(),
+                    dstSize = IntSize(size.width.toInt(), size.height.toInt())
+                )
+            }
         }
     }
 }

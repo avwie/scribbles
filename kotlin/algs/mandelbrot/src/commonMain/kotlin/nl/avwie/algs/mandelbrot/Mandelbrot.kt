@@ -1,6 +1,7 @@
 package nl.avwie.algs.mandelbrot
 
 import androidx.compose.ui.graphics.Color
+import kotlinx.coroutines.*
 import nl.avwie.common.ColorMap
 import org.jetbrains.skia.*
 
@@ -80,6 +81,23 @@ class MandelbrotMap(
                 }
                 cy += options.deltaY
                 y += 1
+            }
+            return MandelbrotMap(options, buffer)
+        }
+
+        suspend fun parallel(options: Options): MandelbrotMap {
+            val buffer = IntArray(options.xRes * options.yRes) { 0 }
+            withContext(Dispatchers.Default) {
+                val tasks = (0 until options.yRes).map { y ->
+                    async {
+                        (0 until options.xRes).forEach { x ->
+                            val cx0 = options.xMin + x * options.deltaX
+                            val cy0 = options.yMin + y * options.deltaY
+                            buffer[y * options.xRes + x] = mandelbrot(cx0, cy0, options.limit)
+                        }
+                    }
+                }
+                tasks.awaitAll()
             }
             return MandelbrotMap(options, buffer)
         }

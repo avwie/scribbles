@@ -12,10 +12,10 @@ import nl.avwie.common.ColorMap
 
 fun main() = singleWindowApplication(
     title = "Mandelbrot",
-    state = WindowState(size = DpSize(640.dp, 480.dp))
+    state = WindowState(size = DpSize(800.dp, 600.dp))
 ) {
-    var x by remember { mutableStateOf(-1.2) }
-    var y by remember { mutableStateOf(-0.31) }
+    var x by remember { mutableStateOf(-1.141) }
+    var y by remember { mutableStateOf(-0.2678) }
     var scale by remember { mutableStateOf(0.1) }
 
     MandelbrotViewer(
@@ -27,6 +27,7 @@ fun main() = singleWindowApplication(
         onClick = { x1, y1 ->
             x = x1
             y = y1
+            println(x to y)
         },
         onZoomIn = {
             scale /= 2
