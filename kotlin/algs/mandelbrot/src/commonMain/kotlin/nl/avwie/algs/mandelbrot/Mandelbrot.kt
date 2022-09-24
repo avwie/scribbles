@@ -47,13 +47,15 @@ class MandelbrotMap(
         )
         bitmap.allocPixels(info)
 
-        val colors = (0 .. options.limit).map { colorMap[it.toFloat() / options.limit] }.toTypedArray()
+        val min = buffer.minOrNull() ?: 0
+        val max = buffer.maxOrNull()?.plus(1) ?: options.limit
+        val colors = (0 .. (max - min)).map { colorMap[it.toFloat() / (max - min)] }.toTypedArray()
 
         val bytes = ByteArray(width * height * ColorType.RGBA_8888.bytesPerPixel)
         this.buffer.forEachIndexed { index, value ->
             val c = when (value) {
                 options.limit -> Color.Black
-                else -> colors[value]
+                else -> colors[value - min]
             }
             bytes[index * ColorType.RGBA_8888.bytesPerPixel + 0] = (c.red * 255).toInt().toByte()
             bytes[index * ColorType.RGBA_8888.bytesPerPixel + 1] = (c.green * 255).toInt().toByte()
@@ -85,19 +87,18 @@ class MandelbrotMap(
             return MandelbrotMap(options, buffer)
         }
 
-        suspend fun parallel(options: Options): MandelbrotMap {
-            val buffer = IntArray(options.xRes * options.yRes) { 0 }
+        suspend fun parallel(options: Options, resolution: Int = 1): MandelbrotMap {
+            val buffer = IntArray(options.xRes / resolution * options.yRes / resolution) { 0 }
             withContext(Dispatchers.Default) {
-                val tasks = (0 until options.yRes).map { y ->
-                    async {
-                        (0 until options.xRes).forEach { x ->
+                (0 until options.yRes / resolution).forEach { y ->
+                    launch {
+                        (0 until options.xRes / resolution).forEach { x ->
                             val cx0 = options.xMin + x * options.deltaX
                             val cy0 = options.yMin + y * options.deltaY
                             buffer[y * options.xRes + x] = mandelbrot(cx0, cy0, options.limit)
                         }
                     }
                 }
-                tasks.awaitAll()
             }
             return MandelbrotMap(options, buffer)
         }
@@ -119,6 +120,14 @@ class MandelbrotMap(
             return Pair(
                 xMin + (xMax - xMin) * x / xRes,
                 yMin + (yMax - yMin) * y / yRes
+            )
+        }
+
+        fun withResolution(resolution: Int): Options {
+            require(resolution >= 1)
+            return copy(
+                xRes = xRes / resolution,
+                yRes = yRes / resolution,
             )
         }
 

@@ -19,7 +19,6 @@ fun main() = singleWindowApplication(
     var scale by remember { mutableStateOf(0.1) }
 
     MandelbrotViewer(
-        limit = 512,
         x = x,
         y = y,
         xScale = scale,
@@ -27,7 +26,6 @@ fun main() = singleWindowApplication(
         onClick = { x1, y1 ->
             x = x1
             y = y1
-            println(x to y)
         },
         onZoomIn = {
             scale /= 2

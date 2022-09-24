@@ -14,17 +14,15 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PointMode
 import androidx.compose.ui.graphics.asComposeImageBitmap
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.unit.IntSize
 import nl.avwie.common.ColorMap
+import org.jetbrains.skia.Bitmap
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable fun MandelbrotViewer(
-    limit: Int,
     x: Double,
     y: Double,
     xScale: Double,
@@ -42,18 +40,23 @@ import nl.avwie.common.ColorMap
         x,
         y,
         xScale,
-        limit
+        2048
     )
-    var map: MandelbrotMap? by remember { mutableStateOf(null) }
 
+    var currentResolution by remember(options) { mutableStateOf(64) }
+
+    var bitmap: Bitmap? by remember { mutableStateOf(null) }
     val requester = remember { FocusRequester() }
 
     LaunchedEffect(Unit) {
         requester.requestFocus()
     }
 
-    LaunchedEffect(options) {
-        map = MandelbrotMap.parallel(options)
+    LaunchedEffect(currentResolution, options) {
+        bitmap = MandelbrotMap.parallel(options.withResolution(currentResolution)).asBitmap(colorMap)
+        if (currentResolution > 1) {
+            currentResolution /= 4
+        }
     }
 
     Column {
@@ -63,22 +66,24 @@ import nl.avwie.common.ColorMap
             .focusable()
             .onPointerEvent(PointerEventType.Release) {
                 val position = it.changes.first().position
-                val (x1, y1) = options.convertScreenCoordinates(position.x / density, position.y / density)
+                val (x1, y1) = options.convertScreenCoordinates(position.x, position.y)
                 onClick(x1, y1)
             }
             .onKeyEvent {
-                when (it.key) {
-                    Key.DirectionUp -> { onZoomIn(); true}
-                    Key.DirectionDown -> { onZoomOut(); true}
+
+                when {
+                    it.type != KeyEventType.KeyUp -> false
+                    it.key == Key.DirectionUp -> { onZoomIn(); true}
+                    it.key == Key.DirectionDown -> { onZoomOut(); true}
                     else -> false
                 }
             }
         ) {
-            canvasWidth = (size.width / density).toInt()
-            canvasHeight = (size.height / density).toInt()
-            if (map != null) {
+            canvasWidth = size.width.toInt()
+            canvasHeight = size.height.toInt()
+            if (bitmap != null) {
                 drawImage(
-                    image = map!!.asBitmap(colorMap).asComposeImageBitmap(),
+                    image = bitmap!!.asComposeImageBitmap(),
                     dstSize = IntSize(size.width.toInt(), size.height.toInt())
                 )
             }
